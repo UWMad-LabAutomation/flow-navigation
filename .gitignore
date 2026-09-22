@@ -1,0 +1,20 @@
+# ROS 2 and colcon build products
+build/
+install/
+log/
+
+# Python caches and local test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Generated maze runtime artifacts
+*.sdf.bak
+
+# Local editor and environment files
+.vscode/
+.idea/
+*.swp
+

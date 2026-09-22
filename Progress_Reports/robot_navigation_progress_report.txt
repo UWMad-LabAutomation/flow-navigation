@@ -1,0 +1,461 @@
+ROBOT NAVIGATION PROGRESS REPORT
+================================
+
+Date: 2026-09-19
+Workspace: /home/zach/robot_ws
+Platform: Ubuntu 24.04 in WSL2, ROS 2 Jazzy, Gazebo Harmonic, RViz2, Nav2
+Robot: I2RT LinearBot FLOW holonomic base
+
+Purpose
+-------
+This report records the work completed for two related tasks:
+
+1. Apply costmap inflation to a real robot occupancy-grid map. Import a map,
+   create increasing navigation costs around walls and obstacles, and deliver
+   the original map, inflated costmap, and a comparison visualization.
+
+2. Test path planning on the inflated map. Use A* or a ROS 2/Nav2 planner and
+   compare paths planned on the original occupancy grid and the inflated map.
+   Document the effects of inflation radius and cost values on clearance and
+   route selection.
+
+The project has a working simulated robot, Gazebo/RViz/Nav2 integration, and a
+procedurally generated maze with matching Gazebo walls and an occupancy map.
+It does not yet satisfy every deliverable in the two tasks. In particular, the
+current map is synthetic rather than a map captured from a real robot, the
+final global inflated-costmap artifact has not been exported, and a systematic
+original-versus-inflated path comparison has not been completed.
+
+
+Current completion status
+-------------------------
+
+Task 1: Apply costmap inflation to a real robot map
+
+Status: PARTIAL
+
+Completed:
+
+- A Nav2 map-server pipeline can load an occupancy-grid YAML/PGM map.
+- A generated maze produces a matching PGM image and YAML metadata.
+- Nav2 static and obstacle costmap layers are configured.
+- The local costmap currently retains an inflation layer.
+- The project has been tested with RViz Map and Costmap displays.
+- The original map and generated Gazebo world use the same maze geometry.
+
+Not complete:
+
+- The current map is generated procedurally; it is not an occupancy grid
+  captured from a real robot.
+- The current global costmap intentionally has only static and laser obstacle
+  layers. Its inflation layer was removed during troubleshooting so that
+  static and live obstacles could be isolated. Therefore the current final
+  configuration does not yet provide the requested globally inflated map.
+- No exported inflated PGM/YAML/PNG artifact has been produced for delivery.
+- No final side-by-side or overlay visualization comparing the original map
+  with the inflated map has been produced.
+
+Task 2: Test path planning on the inflated map
+
+Status: PARTIAL
+
+Completed:
+
+- Nav2 is integrated with a global planner, local controller, costmaps, AMCL,
+  RViz, and Gazebo.
+- The current global planner is SmacPlanner2D, a cost-aware grid A* planner.
+- A clean test produced a successful short path and a successful full maze
+  start-to-goal ComputePathToPose action result with error_code 0 before the
+  latest global-costmap troubleshooting change.
+- RViz navigation goals have produced visible global paths and the simulated
+  base has moved under controller commands.
+- Controller and Gazebo command bridging has been observed working.
+
+Not complete:
+
+- A controlled comparison between planning on an original map and planning on
+  an inflated map has not been run.
+- Path length, minimum obstacle clearance, planning time, and route choice
+  have not been recorded for multiple inflation radii or cost-scaling values.
+- Interactive runs still sometimes abort with "Start occupied" or "no valid
+  path found". The reported map-frame pose can fall in an occupied maze cell
+  even when the Gazebo model appears visually centered in a corridor. This
+  points to a remaining map/TF/localization or live-obstacle-layer alignment
+  issue.
+
+
+Robot description and physical assumptions
+-------------------------------------------
+
+Package: src/robot_description
+
+File: src/robot_description/urdf/flow_base.urdf.xacro
+
+- Defines the simplified FLOW base using URDF/Xacro.
+- Defines base_footprint and base_link navigation frames.
+- Defines a fixed base_footprint to base_link transform.
+- Defines a fixed base_link to laser_link transform.
+- Uses the documented footprint dimensions: 0.751 m by 0.542 m.
+- Uses an approximate base mass of 80 kg.
+- Uses a provisional base height of 0.200 m because a base-only height was not
+  available.
+- COM is undetermined. The provisional COM is the geometric center of the
+  rectangular base at z = base_height / 2.
+- Inertia is calculated as a uniform rectangular solid.
+- The README explicitly marks height, COM, and inertia as provisional and says
+  that measured values are needed before dynamic simulation or hardware use.
+
+This is a navigation simulation model, not a measured final dynamics model.
+
+
+Gazebo simulation
+-----------------
+
+Package: src/robot_simulation
+
+Files:
+
+- worlds/flow_base.sdf
+- launch/flow_base_sim.launch.py
+- robot_simulation/maze_generator.py
+- README.md
+
+The SDF world:
+
+- Uses Gazebo Harmonic systems and a ground plane.
+- Represents the base with a 0.751 m x 0.542 m x 0.200 m chassis.
+- Uses an 80 kg total approximation: 72 kg chassis plus four 2 kg wheels.
+- Uses Gazebo's MecanumDrive plugin as a holonomic approximation.
+- Accepts forward velocity, lateral velocity, and yaw rate.
+- Uses four wheel joints and anisotropic friction to approximate mecanum
+  roller behavior rather than modeling explicit rollers.
+- Publishes simulated odometry and an odom to base_footprint transform.
+- Includes a planar GPU lidar with 360 samples, 10 Hz update rate, and a
+  0.12 m to 12.0 m range.
+
+The simulation launch:
+
+- Starts Gazebo.
+- Starts ros_gz_bridge for /cmd_vel, /odom, /tf, and /scan.
+- Runs robot_state_publisher from the Xacro description.
+- Publishes the static laser frame connection required by the Gazebo sensor
+  frame.
+
+Manual simulation checks completed during development:
+
+- Forward motion using /cmd_vel.
+- Reverse motion using negative linear x.
+- Lateral holonomic motion using linear y.
+- In-place angular motion using angular z.
+- Odometry and TF inspection with /odom, /tf, and tf2_echo.
+- Direct Gazebo command testing was documented in robot_simulation/README.md.
+
+Known simulation limitations:
+
+- MecanumDrive and anisotropic friction are an approximation of the powered
+  caster/FLOW mechanics.
+- Wheel collision geometry and roller dynamics are simplified.
+- Height, COM, and inertia remain provisional.
+- The real I2RT FlowBaseClient/CAN bridge has not been implemented.
+
+
+Maze generation and map import
+-------------------------------
+
+File: src/robot_simulation/robot_simulation/maze_generator.py
+
+The generator:
+
+- Uses recursive backtracking, matching the supplied Python maze algorithm.
+- Defaults to a 21 x 21 odd-sized maze.
+- Uses a repeatable integer seed when seed:=N is supplied.
+- Defaults to 2.5 m maze cells/corridors so the base has usable clearance.
+- Defaults to a 0.05 m occupancy-map resolution.
+- Defaults to 0.5 m wall height.
+- Writes static SDF collision and visual geometry for occupied maze cells.
+- Writes a trinary PGM map and matching YAML metadata.
+- Places the simulated base at the generated start cell.
+- Reports the generated start and goal coordinates.
+
+Default generated artifacts:
+
+- /tmp/flow_maze/maze_world.sdf
+- /tmp/flow_maze/maze.yaml
+- /tmp/flow_maze/maze.pgm
+
+For seed 42 with the default dimensions, the generated start and goal are
+approximately:
+
+- Start: (-22.5, 22.5)
+- Goal: (22.5, -22.5)
+
+The map verified during testing was 1050 x 1050 cells at 0.05 m/cell, with an
+origin of (-26.25, -26.25). The map server reported the map as loaded and
+published it on /map with frame_id map.
+
+File: src/robot_navigation/launch/maze_navigation_launch.py
+
+This launch file generates the maze artifacts before including the normal
+navigation launch. It exposes seed, output_dir, width, height, cell_size,
+resolution, wall_height, use_rviz, use_sim_time, and autostart arguments.
+
+
+Navigation architecture
+-----------------------
+
+Package: src/robot_navigation
+
+File: launch/navigation_launch.py
+
+The normal launch starts:
+
+- Gazebo simulation.
+- map_server using the supplied map YAML.
+- AMCL localization.
+- controller_server.
+- planner_server.
+- smoother_server.
+- behavior_server.
+- bt_navigator.
+- waypoint_follower.
+- velocity_smoother.
+- collision_monitor.
+- Localization and navigation lifecycle managers.
+- RViz using the Nav2 default view unless disabled.
+
+Data flow:
+
+Gazebo lidar -> /scan -> AMCL and local/global obstacle layers
+Gazebo odometry -> /odom and odom -> base_footprint
+robot_state_publisher -> base_footprint -> base_link and base_link -> laser_link
+map_server -> /map with frame_id map
+AMCL -> map -> odom after an initial pose is supplied
+Nav2 global costmap -> /global_costmap/costmap
+Nav2 local costmap -> local costmap topics
+SmacPlanner2D -> global path
+MPPI controller -> cmd_vel_nav
+Velocity smoother -> cmd_vel_smoothed
+Collision monitor -> /cmd_vel
+ros_gz_bridge -> Gazebo MecanumDrive
+
+The base navigation degrees of freedom are vx, vy, and yaw rate. The vertical
+rail and YAM arms are outside the navigation controller scope.
+
+
+Package inventory
+-----------------
+
+- robot_description contains the URDF/Xacro description, frame structure, and
+  provisional inertial model described above.
+- robot_simulation contains the Gazebo world, bridge launch, maze generator,
+  simulation tests, and simulation documentation.
+- robot_navigation contains Nav2 parameters, navigation launches, maze launch,
+  navigation tests, and navigation documentation.
+- robot_bringup exists as an initial ament_python package scaffold with package
+  metadata and standard tests, but it does not yet provide a top-level launch
+  system or hardware bringup.
+- A robot_base_bridge package is described in the project architecture, but it
+  is not currently present under src and no real FlowBaseClient/CAN interface
+  has been implemented.
+
+
+Current Nav2 configuration
+--------------------------
+
+File: src/robot_navigation/config/nav2_flow_params.yaml
+
+Localization:
+
+- AMCL uses map, odom, and base_footprint frames.
+- AMCL uses OmniMotionModel for the holonomic base.
+- AMCL subscribes to /scan.
+- AMCL broadcasts map -> odom after receiving an initial pose.
+
+Robot footprint:
+
+- The configured rectangular footprint is approximately 0.751 m x 0.542 m.
+- footprint_padding is 0.02 m.
+
+Global costmap current state:
+
+- global_frame: map.
+- robot_base_frame: base_link.
+- resolution: 0.05 m.
+- static_layer subscribes to the transient-local /map.
+- obstacle_layer uses /scan for live laser obstacles.
+- The global inflation layer is currently removed for diagnostic purposes.
+- Current global plugins are [static_layer, obstacle_layer].
+
+Local costmap current state:
+
+- global_frame: odom.
+- robot_base_frame: base_link.
+- rolling 4 m x 4 m window.
+- obstacle_layer uses /scan.
+- inflation_layer remains enabled with a 0.70 m radius and cost scaling factor
+  3.0.
+
+Planner:
+
+- Current plugin: nav2_smac_planner::SmacPlanner2D.
+- downsample_costmap is false.
+- allow_unknown is true.
+- max_iterations is 1,000,000.
+- max_planning_time is 5.0 seconds.
+- cost_travel_multiplier is 2.0.
+- A previous NavFn configuration was replaced because long winding maze paths
+  reached the path-extraction limit in the installed Jazzy NavFn behavior.
+
+Controller:
+
+- Current controller: nav2_mppi_controller::MPPIController.
+- motion_model: Omni.
+- x, y, and yaw velocity and acceleration limits are configured.
+- The velocity chain is controller -> velocity smoother -> collision monitor
+  -> Gazebo bridge.
+
+The package declares nav2_smac_planner as an execution dependency.
+
+
+RViz and TF findings
+--------------------
+
+RViz Fixed Frame must be exactly map. The /map topic and /global_costmap/costmap
+topic were both verified with one publisher and an RViz subscription.
+
+Important startup behavior:
+
+- map_server publishing /map does not by itself create a TF frame named map.
+- AMCL publishes map -> odom after receiving a 2D initial pose.
+- The global costmap waits for a usable transform to base_link.
+- Early "Invalid frame ID map" and transform extrapolation messages can occur
+  while AMCL and the costmap start. They should resolve after the initial pose
+  and TF chain are available.
+- RViz's Topic OK status only confirms the configured topic name. A display
+  with Width 0 and Height 0 has not received a valid OccupancyGrid yet.
+- The downsampled-costmap display is not used because downsample_costmap is
+  false and should be disabled in RViz.
+
+
+Validation performed
+--------------------
+
+Build and package tests:
+
+- robot_description, robot_simulation, and robot_navigation built successfully
+  with colcon.
+- The simulation and navigation package tests reported 6 tests, 0 errors,
+  0 failures, and 2 skipped tests in the latest validation run.
+- Maze generation and SDF syntax were checked during development.
+- Generated maps loaded successfully in Nav2 map_server.
+
+Runtime checks:
+
+- /map reported nav_msgs/msg/OccupancyGrid with one map_server publisher.
+- /global_costmap/costmap reported one global_costmap publisher and an RViz
+  subscriber.
+- AMCL logged initialPoseReceived and Setting pose.
+- tf2_echo eventually produced map -> odom and map -> base_link transforms.
+- A clean SmacPlanner2D direct planner test returned SUCCEEDED and
+  error_code 0 for a full generated-maze route before the latest global
+  inflation diagnostic change.
+- Interactive navigation produced a path, generated velocity commands, and
+  moved the Gazebo base.
+
+Latest known runtime failure:
+
+- The planner aborted with "Start occupied" after the robot had moved.
+- One logged map-frame pose was approximately (-20.40, 15.81), which maps to
+  an occupied cell in the seed-42 maze. This indicates that the costmap and
+  localization estimate considered the robot to be in a wall cell, even when
+  the Gazebo model appeared visually centered in a corridor.
+- Other attempts reported "no valid path found" for selected goals.
+- The remaining investigation is to compare /amcl_pose, map -> base_link,
+  /odom, the static map, and live laser obstacle markings at the failure pose.
+
+
+How to reproduce the current simulation
+----------------------------------------
+
+From a clean terminal:
+
+    cd ~/robot_ws
+    source /opt/ros/jazzy/setup.bash
+    colcon build --symlink-install \
+      --packages-select robot_description robot_simulation robot_navigation
+    source install/setup.bash
+    ros2 launch robot_navigation maze_navigation_launch.py seed:=42
+
+In RViz:
+
+1. Set Global Options / Fixed Frame to map.
+2. Add or verify Map on /map.
+3. Set the initial pose near the generated start, approximately (-22.5, 22.5)
+   for seed 42.
+4. Verify /global_costmap/costmap is selected for the global costmap display.
+5. Send a goal near the center of a known free corridor.
+
+Useful terminal checks:
+
+    ros2 topic info /map -v
+    ros2 topic info /global_costmap/costmap -v
+    ros2 topic echo /global_costmap/costmap --once
+    ros2 topic echo /amcl_pose --once
+    ros2 run tf2_ros tf2_echo map base_link
+    ros2 lifecycle get /amcl
+    ros2 lifecycle get /planner_server
+    ros2 topic echo /cmd_vel
+    ros2 topic echo /odom
+
+
+Remaining work for the two assignment tasks
+--------------------------------------------
+
+1. Import a real occupancy-grid map produced by a robot and preserve the map
+   YAML/PGM as the original-map deliverable.
+
+2. Restore or create a global inflation configuration for that real map. Keep
+   lethal wall cells, select an inflation radius based on the measured robot
+   footprint, and tune the cost scaling factor.
+
+3. Export the resulting inflated costmap in a documented image/data format.
+   Record map resolution, origin, thresholds, inflation radius, and cost
+   scaling factor beside the artifact.
+
+4. Produce a visualization with the original occupancy grid and inflated
+   costmap side by side or overlaid. Include a legend for free, occupied,
+   unknown, and inflated-cost regions.
+
+5. Run the same start/goal pairs on the original and inflated maps using A*
+   or SmacPlanner2D. Record path length, planning time, minimum clearance,
+   and whether each route is valid.
+
+6. Repeat the comparison for multiple inflation radii and cost-scaling
+   factors. Explain how larger inflation margins reject narrow routes or move
+   paths toward corridor centers, and how smaller margins permit routes closer
+   to obstacles.
+
+7. Resolve the current Start occupied behavior by validating map-to-world
+   alignment, AMCL pose, odometry, laser frame, footprint, and live obstacle
+   layer data at the failure pose.
+
+8. Re-enable the global inflation layer after the diagnostic binary-costmap
+   experiment and retest both global planning and controller execution.
+
+9. Keep the final report with the original map, inflated map, comparison
+   visualization, parameter values, commands, and measured results.
+
+
+Files most relevant to future work
+-----------------------------------
+
+- src/robot_description/urdf/flow_base.urdf.xacro
+- src/robot_simulation/worlds/flow_base.sdf
+- src/robot_simulation/launch/flow_base_sim.launch.py
+- src/robot_simulation/robot_simulation/maze_generator.py
+- src/robot_navigation/launch/navigation_launch.py
+- src/robot_navigation/launch/maze_navigation_launch.py
+- src/robot_navigation/config/nav2_flow_params.yaml
+- src/robot_navigation/README.md
+- src/robot_simulation/README.md
+- src/robot_description/README.md

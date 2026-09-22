@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="linearbot">
+  <!--
+    The footprint dimensions come from the documented full LinearBot envelope.
+    Base height is provisional because a base-only height is not yet available.
+  -->
+  <xacro:property name="base_length" value="0.751" />
+  <xacro:property name="base_width" value="0.542" />
+  <xacro:property name="base_height" value="0.200" />
+  <xacro:property name="base_mass" value="80.0" />
+
+  <!-- COM is currently undetermined; use the geometric center provisionally. -->
+  <xacro:property name="com_x" value="0.0" />
+  <xacro:property name="com_y" value="0.0" />
+  <xacro:property name="com_z" value="${base_height / 2.0}" />
+
+  <xacro:property name="ixx" value="${base_mass / 12.0 * (base_width * base_width + base_height * base_height)}" />
+  <xacro:property name="iyy" value="${base_mass / 12.0 * (base_length * base_length + base_height * base_height)}" />
+  <xacro:property name="izz" value="${base_mass / 12.0 * (base_length * base_length + base_width * base_width)}" />
+
+  <link name="base_footprint" />
+
+  <joint name="base_footprint_to_base_link" type="fixed">
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${base_height / 2.0}" rpy="0 0 0" />
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}" />
+      </geometry>
+      <material name="flow_base_blue">
+        <color rgba="0.12 0.30 0.65 1.0" />
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 ${base_height / 2.0}" rpy="0 0 0" />
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}" />
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="${com_x} ${com_y} ${com_z}" rpy="0 0 0" />
+      <mass value="${base_mass}" />
+      <inertia
+        ixx="${ixx}" ixy="0.0" ixz="0.0"
+        iyy="${iyy}" iyz="0.0"
+        izz="${izz}" />
+    </inertial>
+  </link>
+
+  <!-- The simulated 2D lidar is mounted above the base and publishes in this frame. -->
+  <link name="laser_link" />
+
+  <joint name="base_link_to_laser_link" type="fixed">
+    <parent link="base_link" />
+    <child link="laser_link" />
+    <origin xyz="0 0 0.22" rpy="0 0 0" />
+  </joint>
+</robot>
