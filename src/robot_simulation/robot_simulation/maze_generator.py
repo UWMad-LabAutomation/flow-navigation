@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import random
 from typing import Optional
@@ -91,7 +92,7 @@ def _wall_model(maze, cell_size: float, wall_height: float):
 
 
 def _write_map(maze, map_yaml: Path, map_image: Path, cell_size: float,
-               resolution: float):
+               resolution: float, seed: int):
     """Write a trinary PGM map with the same occupied cells as the world."""
     height = len(maze)
     width = len(maze[0])
@@ -116,6 +117,7 @@ def _write_map(maze, map_yaml: Path, map_image: Path, cell_size: float,
 
     minimum = -width * cell_size / 2.0
     map_yaml.write_text(
+        f'# maze_seed: {seed}\n'
         f'image: {map_image.name}\n'
         f'mode: trinary\n'
         f'resolution: {resolution:.6f}\n'
@@ -136,6 +138,7 @@ def generate_artifacts(template_world: Path, output_dir: Path, width: int = 21,
     world_path = output_dir / 'maze_world.sdf'
     map_yaml = output_dir / 'maze.yaml'
     map_image = output_dir / 'maze.pgm'
+    manifest_path = output_dir / 'maze_manifest.json'
 
     start_x, start_y = _cell_center(1, 1, width, height, cell_size)
     goal_x, goal_y = _cell_center(
@@ -149,13 +152,34 @@ def generate_artifacts(template_world: Path, output_dir: Path, width: int = 21,
     marker = '    <model name="flow_base"'
     world = world.replace(marker, _wall_model(maze, cell_size, wall_height) +
                           '\n\n' + marker, 1)
+    world_marker = '<world name="flow_base_world">'
+    world_name_seed = str(actual_seed).replace('-', 'm')
+    world = world.replace(
+        world_marker,
+        f'<!-- maze_seed: {actual_seed} -->\n'
+        f'  <world name="flow_base_world_seed_{world_name_seed}">',
+        1,
+    )
     world_path.write_text(world, encoding='utf-8')
-    _write_map(maze, map_yaml, map_image, cell_size, resolution)
+    _write_map(maze, map_yaml, map_image, cell_size, resolution, actual_seed)
+
+    manifest_path.write_text(json.dumps({
+        'seed': actual_seed,
+        'width': width,
+        'height': height,
+        'cell_size': cell_size,
+        'resolution': resolution,
+        'wall_height': wall_height,
+        'world': str(world_path),
+        'map': str(map_yaml),
+        'image': str(map_image),
+    }, indent=2) + '\n', encoding='utf-8')
 
     return {
         'world': world_path,
         'map': map_yaml,
         'image': map_image,
+        'manifest': manifest_path,
         'seed': actual_seed,
         'start': (start_x, start_y),
         'goal': (goal_x, goal_y),

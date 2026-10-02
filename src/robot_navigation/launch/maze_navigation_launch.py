@@ -3,6 +3,7 @@
 
 import os
 from pathlib import Path
+import time
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -17,9 +18,15 @@ def _generate_and_launch(context):
     """Generate the maze before including the normal navigation launch."""
     simulation_share = get_package_share_directory('robot_simulation')
     navigation_share = get_package_share_directory('robot_navigation')
-    output_dir = Path(LaunchConfiguration('output_dir').perform(context))
     seed_text = LaunchConfiguration('seed').perform(context).strip()
     seed = int(seed_text) if seed_text else None
+    output_text = LaunchConfiguration('output_dir').perform(context).strip()
+    if output_text:
+        output_dir = Path(output_text)
+    elif seed is not None:
+        output_dir = Path('/tmp') / f'flow_maze_seed_{seed}_{time.time_ns()}'
+    else:
+        output_dir = Path('/tmp') / f'flow_maze_run_{time.time_ns()}'
 
     artifacts = generate_artifacts(
         template_world=Path(simulation_share) / 'worlds' / 'flow_base.sdf',
@@ -48,7 +55,9 @@ def _generate_and_launch(context):
         f"corridor={artifacts['corridor_width']:.2f} m "
         f"start=({artifacts['start'][0]:.2f}, {artifacts['start'][1]:.2f}) "
         f"goal=({artifacts['goal'][0]:.2f}, {artifacts['goal'][1]:.2f}) "
-        f"map={artifacts['map']}"))
+        f"world={artifacts['world']} "
+        f"map={artifacts['map']} "
+        f"manifest={artifacts['manifest']}"))
     return [info, navigation_launch]
 
 
@@ -60,8 +69,10 @@ def generate_launch_description():
             description='Optional integer seed. Empty generates a new maze.',
         ),
         DeclareLaunchArgument(
-            'output_dir', default_value='/tmp/flow_maze',
-            description='Directory for generated SDF, YAML, and PGM files.',
+            'output_dir', default_value='',
+            description=(
+                'Directory for generated artifacts. Empty creates a unique '
+                'seed-labeled run directory.'),
         ),
         DeclareLaunchArgument(
             'width', default_value='21',
