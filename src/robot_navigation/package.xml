@@ -3,7 +3,7 @@
 <package format="3">
   <name>robot_navigation</name>
   <version>0.0.0</version>
-  <description>Holonomic Nav2 and RViz bringup for the FLOW base.</description>
+  <description>Nav2 and RViz bringup for the FLOW base with forward-first path following.</description>
   <maintainer email="zachgaier5@gmail.com">Zach Gaier</maintainer>
   <license>Apache-2.0</license>
 
@@ -18,7 +18,9 @@
   <exec_depend>nav2_controller</exec_depend>
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
   <exec_depend>nav2_planner</exec_depend>
+  <exec_depend>nav2_rviz_plugins</exec_depend>
   <exec_depend>nav2_smac_planner</exec_depend>
   <exec_depend>nav2_smoother</exec_depend>
   <exec_depend>nav2_velocity_smoother</exec_depend>

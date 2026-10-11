@@ -9,6 +9,37 @@
   <xacro:property name="base_height" value="0.200" />
   <xacro:property name="base_mass" value="80.0" />
 
+  <!--
+    D435i depth-reference pose relative to base_link, in metres and radians.
+    Overhead placement is provisional: height and mount offsets are unmeasured.
+    Zero yaw faces +X, through the 0.542 m-wide end of the base. Automatic
+    pitch puts the bottom of the depth view on the ground 1 m beyond it.
+  -->
+  <xacro:arg name="camera_x" default="0.0" />
+  <xacro:arg name="camera_y" default="0.0" />
+  <xacro:arg name="camera_z" default="1.70" />
+  <xacro:arg name="camera_roll" default="0.0" />
+  <xacro:arg name="camera_pitch" default="auto" />
+  <xacro:arg name="camera_yaw" default="0.0" />
+  <xacro:arg name="camera_hfov" default="90.0" />
+  <xacro:arg name="camera_image_width" default="320" />
+  <xacro:arg name="camera_image_height" default="180" />
+  <xacro:arg name="camera_ground_distance" default="1.0" />
+  <xacro:arg name="camera_nominal_depth_frames" default="true" />
+  <xacro:property name="camera_pitch_request" value="$(arg camera_pitch)" />
+  <xacro:property name="camera_ground_run"
+                  value="${base_length / 2.0 + float('$(arg camera_ground_distance)') - float('$(arg camera_x)')}" />
+  <xacro:property name="camera_half_vfov"
+                  value="${atan(tan(float('$(arg camera_hfov)') * pi / 360.0) * float('$(arg camera_image_height)') / float('$(arg camera_image_width)'))}" />
+  <xacro:property name="camera_mount_pitch"
+                  value="${max(0.0, atan2(float('$(arg camera_z)'), camera_ground_run) - camera_half_vfov) if camera_pitch_request == 'auto' else float(camera_pitch_request)}" />
+
+  <!-- Simplified D435i enclosure and nominal left-depth-imager reference. -->
+  <xacro:property name="camera_width" value="0.090" />
+  <xacro:property name="camera_height" value="0.025" />
+  <xacro:property name="camera_depth" value="0.025" />
+  <xacro:property name="camera_depth_reference_y" value="0.0175" />
+
   <!-- COM is currently undetermined; use the geometric center provisionally. -->
   <xacro:property name="com_x" value="0.0" />
   <xacro:property name="com_y" value="0.0" />
@@ -54,7 +85,70 @@
     </inertial>
   </link>
 
-  <!-- The simulated 2D lidar is mounted above the base and publishes in this frame. -->
+  <!--
+    Single forward-facing D435i. camera_link uses X forward, Y left, Z up.
+    This is a static description, not a Gazebo depth-sensor implementation.
+    The requested 90-degree horizontal view is an approximation; nominal
+    D435i depth FOV is 87 degrees horizontal by 58 degrees vertical.
+  -->
+  <joint name="base_link_to_camera_link" type="fixed">
+    <parent link="base_link" />
+    <child link="camera_link" />
+    <origin xyz="$(arg camera_x) $(arg camera_y) $(arg camera_z)"
+            rpy="$(arg camera_roll) ${camera_mount_pitch} $(arg camera_yaw)" />
+  </joint>
+
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 ${-camera_depth_reference_y} 0" rpy="0 0 0" />
+      <geometry>
+        <box size="${camera_depth} ${camera_width} ${camera_height}" />
+      </geometry>
+      <material name="camera_silver">
+        <color rgba="0.65 0.65 0.68 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 ${-camera_depth_reference_y} 0" rpy="0 0 0" />
+      <geometry>
+        <box size="${camera_depth} ${camera_width} ${camera_height}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Disable these nominal frames when the RealSense driver publishes them. -->
+  <xacro:if value="$(arg camera_nominal_depth_frames)">
+    <link name="camera_depth_frame" />
+    <joint name="camera_link_to_depth_frame" type="fixed">
+      <parent link="camera_link" />
+      <child link="camera_depth_frame" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <!-- Optical axes: Z forward, X right, Y down (ROS REP-103). -->
+    <link name="camera_depth_optical_frame" />
+    <joint name="camera_depth_to_optical_frame" type="fixed">
+      <parent link="camera_depth_frame" />
+      <child link="camera_depth_optical_frame" />
+      <origin xyz="0 0 0" rpy="${-pi / 2.0} 0 ${-pi / 2.0}" />
+    </joint>
+  </xacro:if>
+
+  <!-- Virtual level scan plane for projecting the tilted camera point cloud.
+       Its 0.22 m height keeps the 2D scan inside the collision monitor's band. -->
+  <link name="camera_scan_frame" />
+  <joint name="base_link_to_camera_scan_frame" type="fixed">
+    <parent link="base_link" />
+    <child link="camera_scan_frame" />
+    <origin xyz="$(arg camera_x) $(arg camera_y) 0.22"
+            rpy="0 0 $(arg camera_yaw)" />
+  </joint>
+
+  <!--
+    Legacy simulation compatibility: the existing SDF lidar and bridge still
+    reference laser_link. Retain this frame until that simulation is migrated;
+    the intended hardware sensor is the single D435i above.
+  -->
   <link name="laser_link" />
 
   <joint name="base_link_to_laser_link" type="fixed">

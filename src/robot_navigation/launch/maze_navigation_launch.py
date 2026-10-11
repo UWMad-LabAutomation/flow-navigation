@@ -12,6 +12,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 from robot_simulation.maze_generator import generate_artifacts
+from robot_simulation.sensor_configuration import (
+    sensor_launch_arguments, sensor_launch_configurations,
+)
 
 
 def _generate_and_launch(context):
@@ -48,6 +51,7 @@ def _generate_and_launch(context):
             'use_rviz': LaunchConfiguration('use_rviz'),
             'use_sim_time': LaunchConfiguration('use_sim_time'),
             'autostart': LaunchConfiguration('autostart'),
+            **sensor_launch_configurations(),
         }.items(),
     )
     info = LogInfo(msg=(
@@ -63,7 +67,7 @@ def _generate_and_launch(context):
 
 def generate_launch_description():
     """Return a launch description for a generated maze navigation test."""
-    return LaunchDescription([
+    return LaunchDescription(sensor_launch_arguments() + [
         DeclareLaunchArgument(
             'seed', default_value='',
             description='Optional integer seed. Empty generates a new maze.',

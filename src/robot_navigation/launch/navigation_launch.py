@@ -12,12 +12,17 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+from robot_simulation.sensor_configuration import (
+    sensor_launch_arguments, sensor_launch_configurations,
+)
+
 
 def generate_launch_description():
     """Return a complete map-based navigation launch description."""
     navigation_share = get_package_share_directory('robot_navigation')
     simulation_share = get_package_share_directory('robot_simulation')
     nav2_share = get_package_share_directory('nav2_bringup')
+    navigator_share = get_package_share_directory('nav2_bt_navigator')
 
     map_file = LaunchConfiguration('map')
     params_file = LaunchConfiguration('params_file')
@@ -25,6 +30,7 @@ def generate_launch_description():
     autostart = LaunchConfiguration('autostart')
     use_rviz = LaunchConfiguration('use_rviz')
     rviz_config = LaunchConfiguration('rviz_config')
+    nav_to_pose_bt = LaunchConfiguration('nav_to_pose_bt')
     world_file = LaunchConfiguration('world')
     sim_time_parameter = {
         'use_sim_time': ParameterValue(use_sim_time, value_type=bool),
@@ -48,7 +54,9 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(
                 simulation_share, 'launch', 'flow_base_sim.launch.py')),
-        launch_arguments={'world': world_file}.items(),
+        launch_arguments={
+            'world': world_file, **sensor_launch_configurations(),
+        }.items(),
     )
 
     map_server = Node(
@@ -115,7 +123,11 @@ def generate_launch_description():
         package='nav2_bt_navigator',
         executable='bt_navigator',
         name='bt_navigator',
-        parameters=common_parameters,
+        parameters=common_parameters + [{
+            # Keep a valid route instead of choosing a new one every second.
+            # This tree still checks for blockage and retains Nav2 recoveries.
+            'default_nav_to_pose_bt_xml': nav_to_pose_bt,
+        }],
         remappings=tf_remappings,
         output='screen',
     )
@@ -186,7 +198,7 @@ def generate_launch_description():
         output='screen',
     )
 
-    return LaunchDescription([
+    return LaunchDescription(sensor_launch_arguments() + [
         DeclareLaunchArgument(
             'map',
             default_value=os.path.join(
@@ -206,6 +218,13 @@ def generate_launch_description():
             description='SDF world file to load in Gazebo.',
         ),
         DeclareLaunchArgument(
+            'nav_to_pose_bt',
+            default_value=os.path.join(
+                navigator_share, 'behavior_trees',
+                'navigate_w_recovery_and_replanning_only_if_path_becomes_invalid.xml'),
+            description='Navigation behavior tree: retain valid paths and replan on blockage.',
+        ),
+        DeclareLaunchArgument(
             'use_sim_time', default_value='true',
             description='Use Gazebo time.',
         ),
@@ -220,7 +239,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'rviz_config',
             default_value=os.path.join(
-                nav2_share, 'rviz', 'nav2_default_view.rviz'),
+                navigation_share, 'config', 'flow_navigation.rviz'),
             description='RViz configuration file.',
         ),
         simulation,

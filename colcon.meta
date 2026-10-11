@@ -1,0 +1,5 @@
+# Optimize the per-point TF transform used to turn the camera cloud into /scan.
+names:
+  pointcloud_to_laserscan:
+    cmake-args:
+      - -DCMAKE_BUILD_TYPE=Release
