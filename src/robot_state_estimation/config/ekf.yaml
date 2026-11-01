@@ -1,0 +1,46 @@
+# Copyright 2026 Zach Gaier
+# Licensed under the Apache License, Version 2.0.
+ekf_filter_node:
+  ros__parameters:
+    frequency: 50.0
+    sensor_timeout: 0.2
+    two_d_mode: true
+    publish_tf: true
+    publish_acceleration: false
+    print_diagnostics: true
+    reset_on_time_jump: true
+    predict_to_current_time: true
+    transform_time_offset: 0.0
+    transform_timeout: 0.05
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # Fuse independent wheel body velocities, including actual lateral motion.
+    # Do not double-count wheel-integrated position and orientation.
+    odom0: /wheel/odometry
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, true,
+                   false, false, false]
+    odom0_queue_size: 10
+    odom0_differential: false
+    odom0_relative: false
+
+    imu0: /camera/imu
+    # All gyro axes are enabled in the SENSOR frame, so TF correctly projects
+    # the pitched camera's measurements onto base yaw. two_d_mode constrains
+    # roll/pitch rates after the transform. No absolute IMU attitude is used.
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  true,  true,  true,
+                  false, false, false]
+    imu0_queue_size: 30
+    imu0_differential: false
+    imu0_relative: false
+    # Acceleration is deliberately excluded: gravity, elevator motion and arm
+    # vibration must not become planar base acceleration measurements.
+    imu0_remove_gravitational_acceleration: false

@@ -1,0 +1,26 @@
+{
+  "rates_sim_hz": {
+    "imu": 100.01626942162207,
+    "wheel": 20.0,
+    "filtered": 50.0
+  },
+  "tf_publisher_nodes": [
+    "ekf_filter_node",
+    "robot_state_publisher"
+  ],
+  "odom_publishers": [
+    "ekf_filter_node"
+  ],
+  "imu_frame": "camera_imu_frame",
+  "accuracy": {
+    "duration_sim_s": 24.035,
+    "gyro_rate_rmse_rad_s": 0.0010186132915293569,
+    "integrated_gyro_heading_max_error_deg": 0.042950789300064435,
+    "ekf_position_rmse_m": 0.0067762753089642075,
+    "ekf_position_max_error_m": 0.009024865412659407,
+    "ekf_heading_rmse_deg": 0.0648152744182012,
+    "ekf_heading_max_error_deg": 0.1159652224101567,
+    "comparison": "Gazebo truth interpolated to each sensor/EKF simulation timestamp"
+  },
+  "imu_orientation_available": false
+}

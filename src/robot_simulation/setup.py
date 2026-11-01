@@ -32,6 +32,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'inertial_measurements = robot_simulation.inertial_measurements:main',
             'generate_maze = robot_simulation.maze_generator:main',
         ],
     },

@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-28",
+  "fusion_bias_check": {
+    "wheel_yaw_rate": 0.3,
+    "true_imu_yaw_rate": 0.2,
+    "filtered_yaw_rate": 0.2002493765586035,
+    "max_steady_yaw_rate_error": 0.0002493765586034924,
+    "filtered_lateral_velocity": 0.20000000059231315,
+    "camera_pitch_degrees": 26.48,
+    "filtered_messages": 564,
+    "orientation_and_acceleration_fused": false
+  },
+  "navigation_goals": [
+    {
+      "goal": [
+        1,
+        1,
+        0
+      ],
+      "actual": [
+        0.7692641185704547,
+        0.8122777106837966,
+        0.0008949603243537744
+      ],
+      "position_error": 0.2974537020868719,
+      "localization_error": 0.12150684497372541,
+      "wall_seconds": 5.122034866999456
+    },
+    {
+      "goal": [
+        4,
+        0,
+        0
+      ],
+      "actual": [
+        4.014702454127275,
+        0.07090310230622998,
+        -0.22921891986194778
+      ],
+      "position_error": 0.07241140845206882,
+      "localization_error": 0.03641018055733358,
+      "wall_seconds": 22.117757018000702
+    },
+    {
+      "goal": [
+        4,
+        1.4,
+        0
+      ],
+      "actual": [
+        4.015939718550823,
+        1.1945883724172934,
+        0.10157136683125448
+      ],
+      "position_error": 0.2060291517568714,
+      "localization_error": 0.04299245726012608,
+      "wall_seconds": 7.637311280999711
+    }
+  ],
+  "motion": {
+    "max_command_speed": 0.6300000000000001,
+    "max_lateral_command": 0.3694199323654175,
+    "lateral_travel": 2.7939542024087594,
+    "scan_publishers": [
+      "camera_to_scan"
+    ]
+  },
+  "inserted_obstacle": [
+    2.8,
+    1.4,
+    0.5,
+    0.5
+  ],
+  "limitations": [
+    "Simulation validated; physical D435i fusion not tested.",
+    "IMU stabilizes local odometry; map localization still requires AMCL/SLAM.",
+    "Gyro drift and hardware covariances/moving camera transform need calibration."
+  ],
+  "raw_evidence": [
+    "/tmp/flow_imu_fusion_1",
+    "/tmp/flow_imu_navigation_1"
+  ],
+  "physics_and_tf_check": {
+    "rates_sim_hz": {
+      "imu": 94.89795918367346,
+      "wheel": 20.000000000000004,
+      "filtered": 50.0
+    },
+    "tf_publisher_nodes": [
+      "ekf_filter_node",
+      "robot_state_publisher"
+    ],
+    "odom_publishers": [
+      "ekf_filter_node"
+    ],
+    "imu_frame": "camera_imu_frame",
+    "projected_gyro_yaw_rate": 0.2999300017582187,
+    "filtered_yaw_rate": 0.29924524842985273,
+    "filtered_lateral_speed": 0.1501966853750012,
+    "imu_orientation_available": false
+  },
+  "package_tests": {
+    "passed": 64,
+    "skipped": 2
+  }
+}

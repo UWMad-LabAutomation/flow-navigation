@@ -7,6 +7,14 @@ rate commands.
 
 ## Launch
 
+Build the workspace, including the `robot_cpu_camera` plugin:
+
+```bash
+cd ~/robot_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install --packages-up-to robot_navigation
+```
+
 Source ROS 2 and the workspace, then run:
 
 ```bash
@@ -19,29 +27,148 @@ The launch file starts Gazebo, bridges the simulated command and state topics,
 and publishes the static `base_footprint` to `base_link` transform from the
 robot description.
 
+### Default CPU camera
+
+`sensor:=camera camera_backend:=cpu` uses physics ray casting against the
+current collision geometry. It publishes synthetic `PointCloud2` on the same
+topic as the rendered camera, so the existing `camera_to_scan` node remains
+the only publisher of `/scan`. No lidar sensor, depth-image renderer, or local
+renderer patch is loaded. Dynamic objects and newly inserted collision
+objects are included; no map or ground-truth pose is sent to Nav2.
+
+The generated CPU world uses a thin floor collision slab with the same top
+surface and visible 100 x 100 m extent. This avoids false raised-floor ray
+returns from DART's oversized internal plane box. The source SDF and floor
+visual stay unchanged. Worlds extending beyond that area need a larger floor.
+
+The default **80 x 45 ray grid** samples the **87 x 58 degree** camera view at
+the requested **30 Hz of simulation time**, with the same **0.3-3.0 m optical
+depth limits** and URDF mount. `camera_ray_width` and `camera_ray_height` change
+sampling density independently of the physical/rendered 1280 x 720 profile.
+Higher density detects finer geometry but costs more CPU time. Rays pass
+through pixel centers, and only the closest hit is returned. Missing and
+out-of-range points are NaNs, including when an object inside the near limit
+occludes a farther object.
+
+This is an ideal geometric approximation, not an exact RealSense emulator.
+Thin objects can fall between rays; collision meshes may differ from visible
+surfaces. Active-stereo depth holes, noise, illumination, material behavior,
+USB transport, RGB and IMU sensing are not simulated. The physical robot still
+uses D435i -> RealSense ROS driver -> PointCloud2 -> camera_to_scan -> /scan ->
+Nav2, without Gazebo. This checkout has no physical RealSense bringup launch;
+hardware calibration and validation remain separate work.
+
+For interactive navigation, keep both Gazebo and RViz visible:
+
+```bash
+ros2 launch robot_navigation maze_navigation_launch.py \
+  sensor:=camera camera_backend:=cpu gui:=true camera_fps:=10
+```
+
+`gui` defaults to true so obstacles can be inserted and moved. On GPU-capable
+WSL, launch selects Mesa D3D12 for Gazebo and RViz instead of CPU software
+rendering. Explicit driver/software overrides are respected; system libraries
+are unchanged. The launch logs `FLOW WSLg GUI graphics: Mesa D3D12 GPU rendering`
+when selected. This uses the GPU for the visible interfaces; ray casting,
+navigation and state estimation remain CPU-based. The real robot needs no
+Gazebo rendering.
+
+Each launch selects a unique Gazebo partition unless `GZ_PARTITION` is already
+set, and bridges the selected world's clock into ROS `/clock`. This prevents
+an older Gazebo server from supplying a different clock or camera stream.
+To use external `gz` commands, set the same explicit `GZ_PARTITION` in both
+terminals before launching. Stop the previous ROS launch before starting a
+new one; Gazebo partitioning does not isolate ROS topic names.
+
+Generated maze walls merge occupied row runs into equivalent boxes. For seed
+1400869175 this reduces 242 collision/visual boxes to 126 without changing wall
+coverage or the map. A same-seed check with Gazebo and RViz visible and 10 Hz
+CPU sensing improved from 0.34 to 0.60 real-time factor. This machine still runs
+the full maze slower than real time; 10 Hz simulation sensing was about 6 Hz
+wall-clock sensing in that check. These are short measurements, not a guarantee
+for every maze or inserted obstacle.
+
+Check geometry, clipping, dynamic occlusion, and throughput without graphics:
+
+```bash
+python3 src/robot_simulation/scripts/check_cpu_camera.py
+```
+
+See [the CPU plugin README](../robot_cpu_camera/README.md) for implementation details.
+
+### Local projection correction
+
+This section applies only to `camera_backend:=render`. Build the renderer once
+if you want to use the optional depth-image simulation:
+
+```bash
+python3 src/robot_simulation/scripts/build_camera_renderer.py
+ros2 launch robot_simulation flow_base_sim.launch.py camera_backend:=render
+```
+
+Gazebo Rendering 8.2.3 has a depth-camera projection defect with explicit
+lens intrinsics: the point cloud expands even though CameraInfo reports the
+requested FOV. This workspace backports the correction from
+[gz-rendering PR #1390](https://github.com/gazebosim/gz-rendering/pull/1390),
+associated with [gz-sensors #614](https://github.com/gazebosim/gz-sensors/issues/614).
+The patch adapts its clipping-plane correction to Harmonic's `PreRender`
+implementation and makes CameraInfo's projection agree with its intrinsics.
+
+`scripts/build_camera_renderer.py` downloads the pinned 8.2.3 source archive,
+verifies its SHA-256, applies `patches/gz-rendering8-depth-projection.patch`,
+and builds with two compiler jobs by default (`--jobs` changes this).
+It needs CMake, a C++ compiler, `patch`, and Gazebo Rendering 8 / Ogre2
+development dependencies. These are installed on the current WSL system.
+The downloaded upstream source retains its Apache-2.0 license and notices.
+An existing archive can be supplied using `--archive /path/to/archive.tar.gz`.
+
+Source and build outputs stay in `build/camera_renderer`; installation stays
+in `install/robot_simulation/opt/camera_renderer`. No system libraries are
+replaced. Rendered-camera launch prepends this renderer to `GZ_RENDERING_PLUGIN_PATH`
+and `LD_LIBRARY_PATH` for its child processes
+and requires the completed local build, preventing silent use of the affected
+system renderer. This recipe targets the workspace's normal isolated colcon
+install and Gazebo Harmonic 8.2.3 dependencies.
+
+After sourcing `install/setup.bash`, verify actual rendered geometry:
+
+```bash
+python3 src/robot_simulation/scripts/check_camera_projection.py
+```
+
+The check creates a temporary wall at 2 m and verifies depth and point-cloud
+coordinates at the center and all four image edges, plus CameraInfo K/P.
+It starts its own isolated Gazebo instance and stops it on completion.
+
 ### Choose the sensing source
 
-The default `sensor:=camera` uses a forward-facing
-depth camera approximating the D435i:
+The default `sensor:=camera camera_backend:=cpu` uses a forward-facing
+ray-based depth-camera approximation:
 
 ```bash
 ros2 launch robot_simulation flow_base_sim.launch.py sensor:=camera
 ```
 
-Use `sensor:=lidar` explicitly for the legacy 360-degree scan. Camera mode publishes:
+Use `sensor:=lidar` explicitly for the legacy 360-degree scan. Camera topics:
 
-| ROS topic | Message type |
-| --- | --- |
-| `/camera/depth/image_raw` | `sensor_msgs/msg/Image` (`32FC1`, depth in metres) |
-| `/camera/depth/camera_info` | `sensor_msgs/msg/CameraInfo` |
-| `/camera/depth/points` | `sensor_msgs/msg/PointCloud2` |
-| `/scan` | `sensor_msgs/msg/LaserScan`, projected from camera depth |
+| ROS topic | Message type | Camera backend |
+| --- | --- | --- |
+| `/camera/depth/image_raw` | `sensor_msgs/msg/Image` (`32FC1`, depth in metres) | render only |
+| `/camera/depth/camera_info` | `sensor_msgs/msg/CameraInfo` | render only |
+| `/camera/depth/points` | `sensor_msgs/msg/PointCloud2` | cpu and render |
+| `/scan` | `sensor_msgs/msg/LaserScan`, projected from camera depth | cpu and render |
 
 The image and camera information use `camera_depth_optical_frame`: Z forward,
 X right, Y down. Gazebo Harmonic's point cloud uses X forward, Y left, Z up;
 a separate bridge labels it `camera_depth_frame` to match those coordinates.
 Both frames connect to the camera mount through the URDF.
-Both sensing modes bridge `/clock`, `/odom`, `/tf`, and `/cmd_vel`.
+Both sensing modes bridge `/clock` and `/cmd_vel`. With `use_imu:=true` (default),
+raw wheel odometry is bridged to `/wheel/odometry/raw`, then given simulation
+covariances on `/wheel/odometry`. A physics-based IMU at the camera mount feeds
+`/camera/imu` at a requested 100 Hz. The CPU EKF publishes filtered `/odom` and
+`odom -> base_footprint`; Gazebo's competing odometry TF is not bridged.
+`use_imu:=false` restores direct wheel `/odom` and TF bridging. No image renderer
+is needed for the IMU. See [state estimation](../robot_state_estimation/README.md).
 Only the selected sensing source runs. In camera mode, `camera_to_scan`
 transforms `/camera/depth/points` into the level `camera_scan_frame`, keeps
 points 0.10 to 1.00 m above the floor, and projects their XY distances into
@@ -52,38 +179,52 @@ Missing returns are reported above `range_max`, so they are discarded rather
 than treated as observed free space. Obstacles below the 0.10 m height filter
 and areas outside the camera view are not represented by this scan.
 
-The ideal pinhole depth sensor uses 320 x 180 pixels at 10 Hz, 90 degrees
-horizontal FOV, and clipping distances of 0.28 to 3.0 m. These are simulation
-settings, not a full reproduction of RealSense noise, stereo failures, RGB,
-or IMU behavior. The vertical FOV follows the aspect ratio (about 58.7 degrees
-at the default horizontal FOV), approximating the D435i's nominal 58 degrees.
-The reduced resolution keeps camera transport and scan conversion responsive.
-Use `camera_image_width:=640 camera_image_height:=360` for higher resolution
-when there is enough processing and transport capacity. Width and height also
-feed the automatic pitch calculation, so changing aspect ratio retains the
-requested ground coverage. Build from the workspace root to apply the
-Release setting for the scan converter in `colcon.meta`.
+The optional rendered pinhole depth sensor uses **1280 x 720 pixels at a requested 30 Hz**,
+**87 degrees horizontal / 58 degrees vertical FOV**, and **0.3 to 3.0 m**
+depth clipping, matching the supplied D435i specifications. Independent lens
+focal lengths set both FOVs; HFOV alone at this aspect ratio would give about
+56.2 degrees vertically. `camera_hfov` and `camera_vfov` control the angles.
+`camera_image_width`, `camera_image_height`, and `camera_fps` control the
+profile. FPS must be positive; FOVs must be between 0 and 180 degrees, image
+dimensions must be positive integers, and `0 < camera_near < camera_far`.
+The `/scan` period is set to `1 / camera_fps`, with a +/-43.5-degree default
+angular window and 0.3-3.0 m planar range limits. Clipping is in camera depth;
+scan ranges are horizontal distances after transforming the tilted cloud.
+The requested rate is in simulation time; it does not guarantee 30 Hz of
+wall-clock throughput. This profile processes 48 times as many depth pixels
+per simulated second as the former 320 x 180 at 10 Hz profile. Build from the
+workspace root to apply the scan converter's Release setting in `colcon.meta`.
 
-The default camera reference height is provisionally 1.70 m, facing +X.
+The physical D435i uses active stereo, includes RGB, and connects over USB 3.
+Both simulation backends approximate ideal depth; stereo matching failures,
+USB transport and RGB behavior are not modeled. The optional physics IMU models noisy gyro/accel
+measurements, without claiming real-device calibration or exporting absolute
+simulator attitude. Its enclosure is 90 x 25 x 25 mm.
+
+The default camera reference is centered along X at 2.0 m above ground,
+facing +X, representing the fully raised elevator. Y remains centered at zero.
 `camera_x`, `camera_y`, `camera_z`, `camera_roll`, `camera_pitch`, and
 `camera_yaw` update both Gazebo sensing and the URDF transforms. Position
 arguments are in metres and rotations in radians; positive pitch tilts down.
-`camera_pitch:=auto` is the default. It calculates about 21.67 degrees down
+`camera_pitch:=auto` is the default. It calculates about 26.48 degrees down
 at the default height, so the bottom of the view reaches the ground one metre
 beyond the 0.751 m-long base's front edge. `camera_ground_distance` changes
-that distance; changing height or FOV recalculates the tilt. The automatic
+that distance; changing height or vertical FOV recalculates the tilt. The automatic
 calculation assumes zero roll/yaw and level ground. An explicit numeric
-`camera_pitch` overrides it.
-`camera_hfov` is in degrees, while `camera_near` and `camera_far` are in metres.
-For example, to use the requested approximate 90-degree horizontal view:
+`camera_pitch` overrides it. Use `camera_z` for a lower elevator position;
+the simulation holds that height and does not animate elevator travel or tilt.
+Both FOVs are in degrees; `camera_near` and `camera_far` are in metres.
+For example, to use the D435i profile with the elevator fully raised:
 
 ```bash
 ros2 launch robot_simulation flow_base_sim.launch.py \
-  sensor:=camera camera_hfov:=90 camera_z:=1.70
+  sensor:=camera camera_hfov:=87 camera_vfov:=58 camera_z:=2.0 \
+  camera_image_width:=1280 camera_image_height:=720 camera_fps:=30
 ```
 
-Use `gui:=false` for a server with headless rendering. The sensor still needs
-a working Ogre2 rendering backend. The launch creates a configured world in
+Keep `gui:=true` for interactive use. CPU sensing itself needs no renderer;
+the visible Gazebo scene still uses graphics.
+The launch creates a configured world in
 `/tmp/flow_sensors_*` and logs its path; it preserves the original world file.
 The camera body and sensing pose are derived from the expanded URDF, so mount
 changes are shared between Gazebo and ROS. Camera/bracket dynamics remain
@@ -94,8 +235,8 @@ height, so `camera_z` matches ROS's ground-level base frame on the flat floor.
 Inspect the sensor after launching:
 
 ```bash
-ros2 topic echo /camera/depth/camera_info --once
-ros2 topic hz /camera/depth/image_raw
+ros2 topic hz /camera/depth/points
+ros2 topic info /scan -v
 ros2 topic echo /scan --once
 ros2 run tf2_ros tf2_echo base_link camera_depth_optical_frame
 ```
@@ -172,7 +313,8 @@ ros2 topic echo /tf --once
 ros2 topic hz /odom
 ```
 
-For a direct Gazebo-only check, use the equivalent Gazebo Transport command:
+For a direct Gazebo-only check, use the equivalent Gazebo Transport command
+in a terminal sharing the launch's explicit `GZ_PARTITION`:
 
 ```bash
 gz topic -t /model/flow_base/cmd_vel -m gz.msgs.Twist \

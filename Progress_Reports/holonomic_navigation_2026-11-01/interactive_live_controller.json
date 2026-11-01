@@ -1,0 +1,8 @@
+{
+  "FollowPath.plugin": "nav2_mppi_controller::MPPIController",
+  "FollowPath.motion_model": "Omni",
+  "FollowPath.vx_max": 0.63,
+  "FollowPath.vy_max": 0.63,
+  "FollowPath.time_steps": 48,
+  "FollowPath.batch_size": 1000
+}

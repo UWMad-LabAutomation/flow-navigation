@@ -1,0 +1,35 @@
+# Copyright 2026 Zach Gaier
+# Licensed under the Apache License, Version 2.0.
+cmake_minimum_required(VERSION 3.16)
+project(robot_cpu_camera)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+find_package(ament_cmake REQUIRED)
+find_package(gz_sim_vendor REQUIRED)
+find_package(gz_plugin_vendor REQUIRED)
+find_package(gz_transport_vendor REQUIRED)
+find_package(gz_msgs_vendor REQUIRED)
+find_package(gz-sim8 REQUIRED)
+find_package(gz-plugin2 REQUIRED COMPONENTS register)
+find_package(gz-transport13 REQUIRED)
+find_package(gz-msgs10 REQUIRED)
+
+add_library(flow_cpu_camera SHARED src/CpuCamera.cc)
+target_compile_features(flow_cpu_camera PRIVATE cxx_std_17)
+target_compile_options(flow_cpu_camera PRIVATE -Wall -Wextra -Wpedantic)
+target_include_directories(flow_cpu_camera PRIVATE include)
+target_link_libraries(flow_cpu_camera PRIVATE gz-sim8::gz-sim8
+  gz-plugin2::register gz-transport13::gz-transport13 gz-msgs10::gz-msgs10)
+install(TARGETS flow_cpu_camera LIBRARY DESTINATION lib)
+install(FILES README.md LICENSE DESTINATION share/${PROJECT_NAME})
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_camera_geometry test/test_camera_geometry.cc)
+  target_compile_features(test_camera_geometry PRIVATE cxx_std_17)
+  target_include_directories(test_camera_geometry PRIVATE include)
+  target_link_libraries(test_camera_geometry gz-sim8::gz-sim8)
+endif()
+ament_package()

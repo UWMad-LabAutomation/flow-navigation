@@ -1,0 +1,363 @@
+{
+  "date": "2026-10-28",
+  "config_sha256": "66fcc32d7487f9cc9f7c637d08c6ce6f332355d6b63ae0cc471db71aeff31271",
+  "imu_accuracy": "imu_accuracy_summary.json",
+  "controller": "Smac Hybrid A* Dubins + Omni MPPI + ForwardTravelCritic",
+  "limits": {
+    "forward_m_s": 0.63,
+    "reverse_m_s": 0.1,
+    "lateral_m_s": 0.63,
+    "total_translation_m_s": 0.63
+  },
+  "known_limitations": [
+    "Simulation tests, not physical camera calibration.",
+    "Side/rear camera blind spots persist; preference is not a visibility guarantee.",
+    "Full-maze reliability not established."
+  ],
+  "clear_start": {
+    "goals": [
+      {
+        "goal": [
+          1,
+          1.8,
+          1.5707963267948966
+        ],
+        "actual": [
+          0.9672061412560657,
+          1.6755619816282572,
+          1.3246130256835191
+        ],
+        "position_error": 0.12868666437359902,
+        "localization_error": 0.049525921303820296,
+        "motion": {
+          "travel_m": 2.030380986224564,
+          "body_lateral_travel_m": 0.039934627378279894,
+          "forward_distance_fraction": 0.9994182873396208,
+          "travel_inside_forward_hfov_fraction": 0.9999999999999984,
+          "first_0_5m_forward_fraction": 0.99795927319658,
+          "first_0_5m_inside_forward_hfov_fraction": 0.9999999999999931
+        },
+        "wall_seconds": 11.675208174005093
+      },
+      {
+        "goal": [
+          5.0,
+          1.8,
+          0
+        ],
+        "actual": [
+          4.820755590373893,
+          1.7364317810782863,
+          -0.11529951151013759
+        ],
+        "position_error": 0.19018274590269896,
+        "localization_error": 0.10473768251500573,
+        "motion": {
+          "travel_m": 3.989891920857291,
+          "body_lateral_travel_m": 0.19351429394113337,
+          "forward_distance_fraction": 0.9881574221746753,
+          "travel_inside_forward_hfov_fraction": 0.9885279981024886,
+          "first_0_5m_forward_fraction": 0.9110475714670455,
+          "first_0_5m_inside_forward_hfov_fraction": 0.9084559046261198
+        },
+        "wall_seconds": 20.11495994500001
+      }
+    ],
+    "summary": {
+      "max_command_speed": 0.6300000000000001,
+      "max_lateral_command": 0.06245817989110947,
+      "lateral_travel": 0.23353260518340402,
+      "scan_publishers": [
+        "camera_to_scan"
+      ],
+      "ekf_accuracy": {
+        "position_rmse_m": 0.0029247117318104564,
+        "position_max_m": 0.004471937528847022,
+        "heading_rmse_deg": 0.07352296495117648,
+        "heading_max_deg": 0.17005156084815437
+      },
+      "map_localization_accuracy": {
+        "position_rmse_m": 0.056812098900401876,
+        "position_max_m": 0.1330813634885467,
+        "heading_rmse_deg": 0.689415727403797,
+        "heading_max_deg": 1.3764481853079378
+      }
+    },
+    "static_boxes": [
+      [
+        -1.25,
+        0,
+        0.5,
+        11
+      ],
+      [
+        8.25,
+        0,
+        0.5,
+        11
+      ],
+      [
+        3.5,
+        -5.25,
+        9,
+        0.5
+      ],
+      [
+        3.5,
+        5.25,
+        9,
+        0.5
+      ]
+    ],
+    "plans": [
+      {
+        "start": [
+          0,
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          0,
+          0
+        ],
+        "poses": 48
+      },
+      {
+        "start": [
+          1,
+          1,
+          0
+        ],
+        "goal": [
+          4,
+          -1,
+          1.5707963267948966
+        ],
+        "poses": 49
+      },
+      {
+        "start": [
+          4,
+          1.5,
+          0
+        ],
+        "goal": [
+          1,
+          1.5,
+          3.141592653589793
+        ],
+        "poses": 51
+      }
+    ],
+    "raw_evidence": "/tmp/flow_forward_start_20261028_5"
+  },
+  "inserted_obstacle": {
+    "goals": [
+      {
+        "goal": [
+          1,
+          1,
+          0
+        ],
+        "actual": [
+          1.0261851166005806,
+          0.960358436243114,
+          0.28930739106078546
+        ],
+        "position_error": 0.04750909290311973,
+        "localization_error": 0.11074568565372722,
+        "motion": {
+          "travel_m": 1.4578702773862697,
+          "body_lateral_travel_m": 0.06014608788422335,
+          "forward_distance_fraction": 0.9985845382272495,
+          "travel_inside_forward_hfov_fraction": 0.9999745509103748,
+          "first_0_5m_forward_fraction": 0.9973992396126089,
+          "first_0_5m_inside_forward_hfov_fraction": 0.9999257970572977
+        },
+        "wall_seconds": 17.952550164998684
+      },
+      {
+        "goal": [
+          4,
+          0,
+          0
+        ],
+        "actual": [
+          3.997732020500744,
+          0.02240262861873133,
+          -0.2304255888408093
+        ],
+        "position_error": 0.02251713791843551,
+        "localization_error": 0.03615827601461497,
+        "motion": {
+          "travel_m": 4.8987119837717135,
+          "body_lateral_travel_m": 0.15325623855886325,
+          "forward_distance_fraction": 0.9977998672094643,
+          "travel_inside_forward_hfov_fraction": 0.9985536520127375,
+          "first_0_5m_forward_fraction": 0.9931567520030722,
+          "first_0_5m_inside_forward_hfov_fraction": 0.9943078540940682
+        },
+        "wall_seconds": 45.00634037399868
+      },
+      {
+        "goal": [
+          4,
+          1.4,
+          0
+        ],
+        "actual": [
+          4.064854039175165,
+          1.2232580621049252,
+          -0.2315515956880704
+        ],
+        "position_error": 0.18826512955999122,
+        "localization_error": 0.03238256754913856,
+        "motion": {
+          "travel_m": 2.075634597212841,
+          "body_lateral_travel_m": 0.23814818408423244,
+          "forward_distance_fraction": 0.9817871904728374,
+          "travel_inside_forward_hfov_fraction": 0.9889876774363925,
+          "first_0_5m_forward_fraction": 0.9363239664607338,
+          "first_0_5m_inside_forward_hfov_fraction": 0.9542848845826173
+        },
+        "wall_seconds": 30.69261946700135
+      }
+    ],
+    "summary": {
+      "max_command_speed": 0.6300000000000001,
+      "max_lateral_command": 0.08491090685129166,
+      "lateral_travel": 0.4516188664578306,
+      "scan_publishers": [
+        "camera_to_scan"
+      ],
+      "ekf_accuracy": {
+        "position_rmse_m": 0.003004775445554712,
+        "position_max_m": 0.00700107077230279,
+        "heading_rmse_deg": 0.11130685505952709,
+        "heading_max_deg": 0.24402173867263283
+      },
+      "map_localization_accuracy": {
+        "position_rmse_m": 0.0556897961868055,
+        "position_max_m": 0.14644253873945082,
+        "heading_rmse_deg": 1.013039336335665,
+        "heading_max_deg": 3.250201345399245
+      }
+    },
+    "static_boxes": [
+      [
+        -1.25,
+        0,
+        0.5,
+        7
+      ],
+      [
+        8.25,
+        0,
+        0.5,
+        7
+      ],
+      [
+        3.5,
+        -3.25,
+        9,
+        0.5
+      ],
+      [
+        3.5,
+        3.25,
+        9,
+        0.5
+      ],
+      [
+        2.5,
+        0,
+        0.8,
+        1.0
+      ],
+      [
+        5,
+        -1,
+        0.6,
+        0.8
+      ]
+    ],
+    "plans": [
+      {
+        "start": [
+          0,
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          0,
+          0
+        ],
+        "poses": 63
+      },
+      {
+        "start": [
+          1,
+          1,
+          0
+        ],
+        "goal": [
+          4,
+          -1,
+          1.5707963267948966
+        ],
+        "poses": 59
+      },
+      {
+        "start": [
+          4,
+          1.5,
+          0
+        ],
+        "goal": [
+          1,
+          1.5,
+          3.141592653589793
+        ],
+        "poses": 53
+      }
+    ],
+    "raw_evidence": "/tmp/flow_forward_obstacles_20261028_2",
+    "inserted_obstacle": [
+      2.8,
+      1.4,
+      0.5,
+      0.5
+    ]
+  },
+  "user_maze_corner": {
+    "maze_seed": 1400869175,
+    "goal": [
+      -22.5,
+      20.8,
+      -1.5707963267948966
+    ],
+    "actual": [
+      -22.446111529314937,
+      20.735748180019442,
+      -1.8116932696090404
+    ],
+    "motion": {
+      "travel_m": 2.041227344163065,
+      "body_lateral_travel_m": 0.12073616097401059,
+      "forward_distance_fraction": 0.9958511248695601,
+      "travel_inside_forward_hfov_fraction": 0.9999999999999989,
+      "first_0_5m_forward_fraction": 0.99207983320127,
+      "first_0_5m_inside_forward_hfov_fraction": 0.9999999999999956
+    },
+    "raw_evidence": "/tmp/flow_cpu_nav_n0h_cjw5"
+  },
+  "shutdown_note": "The maze goal succeeded; simultaneous SIGINT then exposed a collision-monitor teardown segfault. The reusable validator now shuts down Nav2 lifecycle nodes before stopping clock/TF.",
+  "final_checks": {
+    "build": "passed",
+    "tests_passed": 38,
+    "existing_skips": 1,
+    "old_launch_shutdown": "Both Nav2 lifecycle shutdowns succeeded; SIGINT stopped Gazebo/RViz; shell remains open."
+  }
+}

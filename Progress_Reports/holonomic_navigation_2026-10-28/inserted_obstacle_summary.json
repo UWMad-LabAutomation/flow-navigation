@@ -1,0 +1,89 @@
+{
+  "configuration_sha256": "7bfa20d8d6a93b14dce5f95d4b914ece30b2b24329d9488eb552c452d81aba8a",
+  "amcl": {
+    "do_beamskip": true,
+    "alpha1": 0.002,
+    "alpha2": 0.0005,
+    "alpha3": 0.002,
+    "alpha4": 0.0005,
+    "alpha5": 0.0005
+  },
+  "unmapped_obstacle": [
+    2.8,
+    1.4,
+    0.5,
+    0.5
+  ],
+  "goals": [
+    {
+      "goal": [
+        1,
+        1,
+        0
+      ],
+      "actual": [
+        0.770783958852956,
+        0.8206297204295201,
+        -0.021105333314987044
+      ],
+      "position_error": 0.2910561641888305,
+      "localization_error": 0.10249326616071298,
+      "wall_seconds": 5.309084481001264
+    },
+    {
+      "goal": [
+        4,
+        0,
+        0
+      ],
+      "actual": [
+        3.9677197876031896,
+        -0.034878739924411345,
+        -0.22193092299431902
+      ],
+      "position_error": 0.047524084537189364,
+      "localization_error": 0.04464211608413658,
+      "wall_seconds": 32.53184234499895
+    },
+    {
+      "goal": [
+        4,
+        1.4,
+        0
+      ],
+      "actual": [
+        3.9612249975667146,
+        1.2119200924051026,
+        0.0014221170673118448
+      ],
+      "position_error": 0.19203528960742192,
+      "localization_error": 0.049648093141663144,
+      "wall_seconds": 6.843370385999151
+    }
+  ],
+  "motion": {
+    "max_command_speed": 0.5659957173105029,
+    "max_lateral_command": 0.41338080167770386,
+    "lateral_travel": 2.5611340781020933,
+    "scan_publishers": [
+      "camera_to_scan"
+    ]
+  },
+  "maximum_localization_error_m": 0.10249326616071298,
+  "maximum_localization_heading_error_deg": 3.2435967676955695,
+  "raw_evidence": "/tmp/flow_holonomic_dynamic_4",
+  "verification": "Actual Gazebo pose checked; no truth supplied to localization; all measured footprints clear.",
+  "final_maze_regression": {
+    "seed": 2305920845,
+    "goal": [
+      -20.8,
+      22.5
+    ],
+    "result": "SUCCEEDED / error_code 0",
+    "odom_displacement_m": [
+      1.4484861249638497,
+      0.062343574774575736
+    ],
+    "log": "/tmp/flow_cpu_nav__b6sdn5x/launch.log"
+  }
+}

@@ -48,7 +48,7 @@ def _cell_center(row: int, col: int, width: int, height: int,
 
 
 def _wall_model(maze, cell_size: float, wall_height: float):
-    """Create one static SDF model containing every occupied maze cell."""
+    """Create equivalent row-spanning boxes instead of one box per wall cell."""
     height = len(maze)
     width = len(maze[0])
     parts = [
@@ -57,14 +57,22 @@ def _wall_model(maze, cell_size: float, wall_height: float):
         '      <link name="walls">',
     ]
     for row in range(height):
-        for col in range(width):
+        col = 0
+        while col < width:
             if maze[row][col] != 1:
+                col += 1
                 continue
-            x, y = _cell_center(row, col, width, height, cell_size)
+            first_col = col
+            while col + 1 < width and maze[row][col + 1] == 1:
+                col += 1
+            span = col - first_col + 1
+            center_col = (first_col + col) / 2.0
+            col += 1
+            x, y = _cell_center(row, center_col, width, height, cell_size)
             pose = f'{x:.6f} {y:.6f} {wall_height / 2.0:.6f} 0 0 0'
-            name = f'wall_{row}_{col}'
+            name = f'wall_{row}_{first_col}'
             geometry = (
-                f'          <box><size>{cell_size:.6f} {cell_size:.6f} '
+                f'          <box><size>{span * cell_size:.6f} {cell_size:.6f} '
                 f'{wall_height:.6f}</size></box>')
             parts.extend([
                 f'        <collision name="{name}_collision">',

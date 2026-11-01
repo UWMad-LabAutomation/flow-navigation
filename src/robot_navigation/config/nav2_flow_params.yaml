@@ -3,14 +3,14 @@
 
 amcl:
   ros__parameters:
-    # Calibrated for the clean Gazebo wheel odometry. The old 0.2 values
-    # let particles wander when only the forward camera saw the corridor.
+    # Low noise for the nearly exact Gazebo mecanum odometry. Wider noise
+    # let unmapped obstacles pull the limited-FOV camera estimate off the map.
     # Re-estimate these noise coefficients before using real base odometry.
-    alpha1: 0.02
-    alpha2: 0.005
-    alpha3: 0.02
-    alpha4: 0.005
-    alpha5: 0.005
+    alpha1: 0.002
+    alpha2: 0.0005
+    alpha3: 0.002
+    alpha4: 0.0005
+    alpha5: 0.0005
     base_frame_id: base_footprint
     global_frame_id: map
     odom_frame_id: odom
@@ -19,7 +19,10 @@ amcl:
     # Combine the valid camera beams as probabilities, ignoring missing returns.
     # Frequent updates constrain heading before drift changes the planned path.
     laser_model_type: likelihood_field_prob
-    do_beamskip: false
+    do_beamskip: true
+    beam_skip_distance: 0.5
+    beam_skip_threshold: 0.3
+    beam_skip_error_threshold: 0.9
     laser_max_range: 100.0
     laser_min_range: -1.0
     max_beams: 90
@@ -76,32 +79,102 @@ controller_server:
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
     FollowPath:
-      # Default navigation follows the path using forward motion and yaw.
-      # FLOW is still physically holonomic; ordinary path following does not strafe.
-      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
-      desired_linear_vel: 0.35
-      lookahead_dist: 0.8
-      use_velocity_scaled_lookahead_dist: false
+      plugin: nav2_mppi_controller::MPPIController
+      motion_model: Omni
+      # 2.4 s horizon fits within the 4 m local costmap at 0.63 m/s.
+      time_steps: 48
+      model_dt: 0.05
+      batch_size: 1000
+      iteration_count: 1
+      vx_std: 0.25
+      vy_std: 0.12
+      wz_std: 0.35
+      vx_max: 0.63
+      vx_min: -0.10
+      vy_max: 0.63
+      wz_max: 0.8
+      ax_max: 0.6
+      ax_min: -1.0
+      ay_max: 0.6
+      ay_min: -1.0
+      az_max: 1.0
+      prune_distance: 2.0
       transform_tolerance: 0.1
-      use_rotate_to_heading: true
-      rotate_to_heading_min_angle: 0.35
-      rotate_to_heading_angular_vel: 0.6
-      max_angular_accel: 1.0
-      allow_reversing: false
-      stateful: true
-      min_approach_linear_velocity: 0.05
-      approach_velocity_scaling_dist: 0.8
-      use_regulated_linear_velocity_scaling: true
-      regulated_linear_scaling_min_radius: 0.9
-      regulated_linear_scaling_min_speed: 0.10
-      use_cost_regulated_linear_velocity_scaling: true
-      cost_scaling_dist: 0.6
-      cost_scaling_gain: 1.0
-      # Match the local inflation layer below for distance-from-cost estimates.
-      inflation_cost_scaling_factor: 3.0
-      use_collision_detection: true
-      max_allowed_time_to_collision_up_to_carrot: 1.5
-      max_robot_pose_search_dist: 2.0
+      temperature: 0.3
+      gamma: 0.015
+      visualize: false
+      regenerate_noises: false
+      reset_period: 1.0
+      retry_attempt_limit: 1
+      # Face travel along a clear path. Omni sampling still permits lateral
+      # collision avoidance, but reverse is limited to slow maneuvering.
+      critics: [ConstraintCritic, CostCritic, GoalCritic, GoalAngleCritic,
+                PathAlignCritic, PathFollowCritic, PathAngleCritic,
+                PreferForwardCritic, ForwardTravelCritic, TwirlingCritic]
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+      CostCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.81
+        critical_cost: 300.0
+        consider_footprint: true
+        collision_cost: 1000000.0
+        near_goal_distance: 0.5
+        trajectory_point_step: 2
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 2
+        threshold_to_consider: 0.5
+        offset_from_furthest: 3
+        use_path_orientations: true
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 12.0
+        offset_from_furthest: 12
+        threshold_to_consider: 0.5
+      TwirlingCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 0.5
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 10.0
+        offset_from_furthest: 12
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 0.25
+        mode: 0
+      PreferForwardCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 0.5
+      ForwardTravelCritic:
+        enabled: true
+        cost_weight: 60.0
+        avoidance_weight: 4.0
+        forward_half_angle: 0.261799
+        obstacle_lookahead: 1.5
+        alignment_tolerance: 0.5
+        robot_half_length: 0.3955
+        robot_half_width: 0.321
 
 local_costmap:
   local_costmap:
@@ -116,7 +189,11 @@ local_costmap:
       resolution: 0.05
       footprint: "[[0.3755, 0.271], [0.3755, -0.271], [-0.3755, -0.271], [-0.3755, 0.271]]"
       footprint_padding: 0.02
-      plugins: [obstacle_layer, inflation_layer]
+      # Holonomic travel also needs mapped obstacles outside the camera FOV.
+      plugins: [static_layer, obstacle_layer, inflation_layer]
+      static_layer:
+        plugin: nav2_costmap_2d::StaticLayer
+        map_subscribe_transient_local: true
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
@@ -185,7 +262,7 @@ planner_server:
     planner_plugins: [GridBased]
     costmap_update_timeout: 1.0
     GridBased:
-      plugin: nav2_smac_planner::SmacPlanner2D
+      plugin: nav2_smac_planner::SmacPlannerHybrid
       tolerance: 0.25
       downsample_costmap: false
       downsampling_factor: 1
@@ -194,8 +271,21 @@ planner_server:
       max_on_approach_iterations: 1000
       terminal_checking_interval: 5000
       max_planning_time: 5.0
-      cost_travel_multiplier: 4.0
-      use_final_approach_orientation: false
+      # Forward curved global paths match the forward-facing camera.
+      motion_model_for_search: DUBIN
+      angle_quantization_bins: 72
+      # A global-path curvature preference, not FLOW's physical turn limit.
+      minimum_turning_radius: 0.4
+      reverse_penalty: 1.2
+      change_penalty: 0.0
+      non_straight_penalty: 1.2
+      cost_penalty: 2.0
+      retrospective_penalty: 0.015
+      analytic_expansion_ratio: 3.5
+      analytic_expansion_max_length: 2.0
+      lookup_table_size: 10.0
+      cache_obstacle_heuristic: false
+      smooth_path: true
       smoother:
         max_iterations: 1000
         w_smooth: 0.3
@@ -218,9 +308,7 @@ behavior_server:
     local_footprint_topic: local_costmap/published_footprint
     global_footprint_topic: global_costmap/published_footprint
     cycle_frequency: 10.0
-    behavior_plugins: [spin, backup, drive_on_heading, assisted_teleop, wait]
-    spin:
-      plugin: nav2_behaviors::Spin
+    behavior_plugins: [backup, drive_on_heading, assisted_teleop, wait]
     backup:
       plugin: nav2_behaviors::BackUp
     drive_on_heading:
@@ -255,10 +343,10 @@ velocity_smoother:
     stamp_smoothed_velocity_with_smoothing_time: false
     scale_velocities: false
     feedback: OPEN_LOOP
-    # Enforce zero lateral velocity for the default navigation policy.
-    # Slow reverse remains available to the BackUp recovery behavior.
-    max_velocity: [0.35, 0.0, 0.8]
-    min_velocity: [-0.10, 0.0, -0.8]
+    # Axis limits allow full-speed strafing. The following limiter also caps
+    # hypot(vx, vy), since independent axis limits permit faster diagonals.
+    max_velocity: [0.63, 0.63, 0.8]
+    min_velocity: [-0.10, -0.63, -0.8]
     max_accel: [0.6, 0.6, 1.0]
     max_decel: [-1.0, -0.6, -1.0]
     odom_topic: odom
@@ -266,11 +354,17 @@ velocity_smoother:
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
 
+planar_velocity_limiter:
+  ros__parameters:
+    max_speed: 0.63
+    max_yaw_rate: 0.8
+    command_timeout: 0.5
+
 collision_monitor:
   ros__parameters:
     base_frame_id: base_footprint
     odom_frame_id: odom
-    cmd_vel_in_topic: cmd_vel_smoothed
+    cmd_vel_in_topic: cmd_vel_limited
     cmd_vel_out_topic: cmd_vel
     state_topic: collision_monitor_state
     transform_tolerance: 0.2

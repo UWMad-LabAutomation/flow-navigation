@@ -1,0 +1,65 @@
+{
+  "runs": [
+    {
+      "stage": "before_wall_merge",
+      "maze_seed": 1400869175,
+      "gui": true,
+      "rviz": true,
+      "camera_fps_simulation": 10,
+      "wall_boxes": 242,
+      "measurement_window_wall_seconds": 8,
+      "real_time_factor": 0.3446353298116845,
+      "scan_wall_hz": 3.4642120461004557,
+      "max_scan_age_sim_seconds": 0.003,
+      "goal": [
+        -22.5,
+        20.8,
+        -1.5707963267948966
+      ],
+      "actual": [
+        -22.439608562031502,
+        20.773620933415426,
+        -1.8125711786137164
+      ],
+      "motion": {
+        "travel_m": 1.994049111122797,
+        "body_lateral_travel_m": 0.12338144963984825,
+        "forward_distance_fraction": 0.9963936371404283,
+        "travel_inside_forward_hfov_fraction": 0.9999999999999991,
+        "first_0_5m_forward_fraction": 0.9917252319341777,
+        "first_0_5m_inside_forward_hfov_fraction": 0.9999999999999964
+      }
+    },
+    {
+      "stage": "after_wall_merge",
+      "maze_seed": 1400869175,
+      "gui": true,
+      "rviz": true,
+      "camera_fps_simulation": 10,
+      "wall_boxes": 126,
+      "measurement_window_wall_seconds": 8,
+      "real_time_factor": 0.6026082709869199,
+      "scan_wall_hz": 5.978914834845978,
+      "max_scan_age_sim_seconds": 0.007,
+      "goal": [
+        -22.5,
+        20.8,
+        -1.5707963267948966
+      ],
+      "actual": [
+        -22.440335984437226,
+        20.817292565422417,
+        -1.8057389360020015
+      ],
+      "motion": {
+        "travel_m": 1.9401545049085223,
+        "body_lateral_travel_m": 0.1630733844071494,
+        "forward_distance_fraction": 0.9937176150002166,
+        "travel_inside_forward_hfov_fraction": 0.9999999999999986,
+        "first_0_5m_forward_fraction": 0.9874984668964201,
+        "first_0_5m_inside_forward_hfov_fraction": 0.999999999999994
+      }
+    }
+  ],
+  "limits": "Short same-seed tests, not a complete maze traversal or full real-time guarantee."
+}

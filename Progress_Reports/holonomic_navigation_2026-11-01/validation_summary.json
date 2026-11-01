@@ -1,0 +1,146 @@
+{
+  "test": "Visible Gazebo/RViz CPU-camera Hybrid A* / Omni MPPI inserted-obstacle course",
+  "summary": {
+    "max_command_speed": 0.6300000000000001,
+    "max_lateral_command": 0.1058989092707634,
+    "lateral_travel": 0.4884330666269679,
+    "scan_publishers": [
+      "camera_to_scan"
+    ],
+    "ekf_accuracy": {
+      "position_rmse_m": 0.006878615796949026,
+      "position_max_m": 0.013633427522890481,
+      "heading_rmse_deg": 0.11656123939290702,
+      "heading_max_deg": 0.22530726510664972
+    },
+    "map_localization_accuracy": {
+      "position_rmse_m": 0.05300304247029349,
+      "position_max_m": 0.11907192519315297,
+      "heading_rmse_deg": 0.6743282807493056,
+      "heading_max_deg": 2.3250171501498063
+    },
+    "real_time_factor": 0.7683247145647927,
+    "gazebo_gui": true,
+    "rviz": true
+  },
+  "goals": [
+    {
+      "goal": [
+        1,
+        1,
+        0
+      ],
+      "actual": [
+        1.0664026724515019,
+        1.0032055453539235,
+        0.24201703722048962
+      ],
+      "position_error": 0.06648000022350713,
+      "localization_error": 0.07241928229511121,
+      "motion": {
+        "travel_m": 1.5188379428912755,
+        "body_lateral_travel_m": 0.0542907097049392,
+        "forward_distance_fraction": 0.9989793964149039,
+        "travel_inside_forward_hfov_fraction": 0.9999999999999971,
+        "first_0_5m_forward_fraction": 0.9981814732713222,
+        "first_0_5m_inside_forward_hfov_fraction": 0.9999999999999912
+      },
+      "wall_seconds": 8.606769174000021
+    },
+    {
+      "goal": [
+        4,
+        0,
+        0
+      ],
+      "actual": [
+        3.9773219564336837,
+        0.048416123431178425,
+        -0.23190545113271357
+      ],
+      "position_error": 0.05346414376101842,
+      "localization_error": 0.04506195410791214,
+      "motion": {
+        "travel_m": 4.892584359890407,
+        "body_lateral_travel_m": 0.18423925087605655,
+        "forward_distance_fraction": 0.998365753835258,
+        "travel_inside_forward_hfov_fraction": 0.9998278536633454,
+        "first_0_5m_forward_fraction": 0.9966853618062625,
+        "first_0_5m_inside_forward_hfov_fraction": 0.9995286361553043
+      },
+      "wall_seconds": 20.270049513000004
+    },
+    {
+      "goal": [
+        4,
+        1.4,
+        0
+      ],
+      "actual": [
+        4.06402117738248,
+        1.219564925971823,
+        -0.236296241533815
+      ],
+      "position_error": 0.1914563320786037,
+      "localization_error": 0.03923192438299903,
+      "motion": {
+        "travel_m": 2.0686377819454598,
+        "body_lateral_travel_m": 0.24988860991507325,
+        "forward_distance_fraction": 0.9696780869069939,
+        "travel_inside_forward_hfov_fraction": 0.9750585522652904,
+        "first_0_5m_forward_fraction": 0.8926376647795646,
+        "first_0_5m_inside_forward_hfov_fraction": 0.8968103577591229
+      },
+      "wall_seconds": 17.410755123
+    }
+  ],
+  "plans": [
+    {
+      "start": [
+        0,
+        0,
+        0
+      ],
+      "goal": [
+        4,
+        0,
+        0
+      ],
+      "pose_count": 63
+    },
+    {
+      "start": [
+        1,
+        1,
+        0
+      ],
+      "goal": [
+        4,
+        -1,
+        1.5707963267948966
+      ],
+      "pose_count": 59
+    },
+    {
+      "start": [
+        4,
+        1.5,
+        0
+      ],
+      "goal": [
+        1,
+        1.5,
+        3.141592653589793
+      ],
+      "pose_count": 53
+    }
+  ],
+  "inserted_obstacle": [
+    2.8,
+    1.4,
+    0.5,
+    0.5
+  ],
+  "first_attempt": "Gazebo exited during the first goal; no successful navigation result counted. Collision monitor segfaulted during the resulting simultaneous teardown. Cause of the Gazebo exit was not established. The fresh repeated run completed successfully.",
+  "limits": "Controlled small-room demonstration; full-maze reliability and physical D435i behavior not established. CPU rays approximate geometry, not stereo noise/holes."
+}

@@ -12,6 +12,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+from robot_simulation.graphics_configuration import graphics_environment
 from robot_simulation.sensor_configuration import (
     sensor_launch_arguments, sensor_launch_configurations,
 )
@@ -22,7 +23,6 @@ def generate_launch_description():
     navigation_share = get_package_share_directory('robot_navigation')
     simulation_share = get_package_share_directory('robot_simulation')
     nav2_share = get_package_share_directory('nav2_bringup')
-    navigator_share = get_package_share_directory('nav2_bt_navigator')
 
     map_file = LaunchConfiguration('map')
     params_file = LaunchConfiguration('params_file')
@@ -127,6 +127,8 @@ def generate_launch_description():
             # Keep a valid route instead of choosing a new one every second.
             # This tree still checks for blockage and retains Nav2 recoveries.
             'default_nav_to_pose_bt_xml': nav_to_pose_bt,
+            'default_nav_through_poses_bt_xml': os.path.join(
+                navigation_share, 'behavior_trees', 'navigate_through_poses_holonomic.xml'),
         }],
         remappings=tf_remappings,
         output='screen',
@@ -156,6 +158,14 @@ def generate_launch_description():
         name='collision_monitor',
         parameters=common_parameters,
         remappings=tf_remappings,
+        output='screen',
+    )
+
+    planar_velocity_limiter = Node(
+        package='robot_navigation',
+        executable='planar_velocity_limiter',
+        name='planar_velocity_limiter',
+        parameters=common_parameters,
         output='screen',
     )
 
@@ -192,6 +202,7 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         arguments=['-d', rviz_config],
+        additional_env=graphics_environment(),
         parameters=[{
             'use_sim_time': ParameterValue(use_sim_time, value_type=bool),
         }],
@@ -220,9 +231,8 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'nav_to_pose_bt',
             default_value=os.path.join(
-                navigator_share, 'behavior_trees',
-                'navigate_w_recovery_and_replanning_only_if_path_becomes_invalid.xml'),
-            description='Navigation behavior tree: retain valid paths and replan on blockage.',
+                navigation_share, 'behavior_trees', 'navigate_holonomic.xml'),
+            description='Keep valid paths and replan on blockage; recover without spinning.',
         ),
         DeclareLaunchArgument(
             'use_sim_time', default_value='true',
@@ -252,6 +262,7 @@ def generate_launch_description():
         bt_navigator,
         waypoint_follower,
         velocity_smoother,
+        planar_velocity_limiter,
         collision_monitor,
         localization_manager,
         navigation_manager,

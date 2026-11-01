@@ -1,0 +1,144 @@
+{
+  "date": "2026-10-28",
+  "configuration": "SmacPlannerHybrid REEDS_SHEPP + MPPI Omni; normal AMCL and camera_to_scan",
+  "environment": "Headless Gazebo Harmonic / ROS Jazzy / WSL2; CPU camera 80x45 at requested 10 Hz",
+  "planning_results": [
+    {
+      "start": [
+        0,
+        0,
+        0
+      ],
+      "goal": [
+        4,
+        0,
+        0
+      ],
+      "poses": 63,
+      "wall_seconds": 0.027607190999333397,
+      "footprint_collision_check": "passed"
+    },
+    {
+      "start": [
+        1,
+        1,
+        0
+      ],
+      "goal": [
+        4,
+        -1,
+        1.5707963267948966
+      ],
+      "poses": 59,
+      "wall_seconds": 0.032456490998811205,
+      "footprint_collision_check": "passed"
+    },
+    {
+      "start": [
+        4,
+        1.5,
+        0
+      ],
+      "goal": [
+        1,
+        1.5,
+        3.141592653589793
+      ],
+      "poses": 42,
+      "wall_seconds": 0.012704101000053925,
+      "footprint_collision_check": "passed"
+    }
+  ],
+  "navigation_results": [
+    {
+      "goal": [
+        1,
+        1,
+        0
+      ],
+      "actual": [
+        0.7818565385684618,
+        0.8187684206391993,
+        -0.00017050111651516485
+      ],
+      "position_error": 0.2836043989837661,
+      "localization_error": 0.07321690374123005,
+      "wall_seconds": 5.474846462999267
+    },
+    {
+      "goal": [
+        4,
+        0,
+        0
+      ],
+      "actual": [
+        4.031942070331067,
+        0.0047350904236572065,
+        -0.24617963587474356
+      ],
+      "position_error": 0.03229112785820662,
+      "localization_error": 0.0598983304996366,
+      "wall_seconds": 19.316514382000605
+    },
+    {
+      "goal": [
+        4,
+        1.4,
+        0
+      ],
+      "actual": [
+        4.028453851609008,
+        1.227380090030583,
+        -0.024458648903566322
+      ],
+      "position_error": 0.17494929262285425,
+      "localization_error": 0.08941672835220454,
+      "wall_seconds": 6.709619622999526
+    }
+  ],
+  "motion": {
+    "max_command_speed": 0.6100929227709803,
+    "max_lateral_command": 0.39508384466171265,
+    "lateral_travel": 2.4664925152016943,
+    "scan_publishers": [
+      "camera_to_scan"
+    ]
+  },
+  "maximum_localization_error_m": 0.147136958477324,
+  "maximum_localization_heading_error_deg": 6.519467757911221,
+  "limiter_ros_checks": [
+    "0.63 m/s diagonal cap",
+    "0.8 rad/s yaw cap",
+    "stale command stops",
+    "nonfinite command stops"
+  ],
+  "maze_check": {
+    "seed": 2305920845,
+    "goal": [
+      -20.8,
+      22.5
+    ],
+    "result": "SUCCEEDED / error_code 0",
+    "odom_displacement_m": [
+      1.455985124357565,
+      0.060158382128300845
+    ],
+    "log": "/tmp/flow_cpu_nav_ej_pc_9t/launch.log"
+  },
+  "raw_evidence": "/tmp/flow_holonomic_validation_4",
+  "limitations": [
+    "Controlled mapped-obstacle course; not a full-maze or hardware certification.",
+    "Single forward camera does not cover all holonomic travel directions.",
+    "Hybrid A* global paths remain curvature constrained.",
+    "MPPI may rotate to meet requested goal orientation."
+  ],
+  "amcl_at_time_of_mapped_test": {
+    "do_beamskip": false,
+    "alpha1": 0.02,
+    "alpha2": 0.005,
+    "alpha3": 0.02,
+    "alpha4": 0.005,
+    "alpha5": 0.005
+  },
+  "final_amcl_validation": "inserted_obstacle_summary.json"
+}

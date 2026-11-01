@@ -1,0 +1,58 @@
+--- a/ogre2/include/gz/rendering/ogre2/Ogre2DepthCamera.hh
++++ b/ogre2/include/gz/rendering/ogre2/Ogre2DepthCamera.hh
+@@ -78,6 +78,9 @@
+       /// \brief Creates an Ogre Workspace instance. Assumes the definition
+       /// already and the depth texture have already been created
+       private: void CreateWorkspaceInstance();
++
++      // Report the requested intrinsics, not the widened rendering frustum.
++      public: virtual math::Matrix4d ProjectionMatrix() const override;
+ 
+       // Documentation inherited
+       public: virtual void PreRender() override;
+--- a/ogre2/src/Ogre2DepthCamera.cc
++++ b/ogre2/src/Ogre2DepthCamera.cc
+@@ -1041,6 +1041,14 @@
+ }
+ 
+ //////////////////////////////////////////////////
++math::Matrix4d Ogre2DepthCamera::ProjectionMatrix() const
++{
++  if (this->projectionMatrix != gz::math::Matrix4d::Zero)
++    return this->projectionMatrix;
++  return BaseDepthCamera::ProjectionMatrix();
++}
++
++//////////////////////////////////////////////////
+ void Ogre2DepthCamera::PreRender()
+ {
+   if (!this->dataPtr->ogreDepthTexture[0])
+@@ -1055,11 +1063,26 @@
+   if (this->ogreCamera &&
+       this->projectionMatrix != gz::math::Matrix4d::Zero)
+   {
+-    if (this->projectionMatrix !=
++    // Backport of gz-rendering PR #1390 for Harmonic's PreRender path.
++    // Keep the requested image-plane intrinsics, but use the same widened
++    // depth planes as CreateDepthTexture and point-cloud reconstruction.
++    auto ogreMatrix = this->projectionMatrix;
++    const double nearPlane = this->NearClipPlane() * 0.9;
++    const double farPlane = this->FarClipPlane() * 1.1;
++    const double invd = 1.0 / (farPlane - nearPlane);
++    ogreMatrix(2, 0) = 0.0;
++    ogreMatrix(2, 1) = 0.0;
++    ogreMatrix(2, 2) = -(farPlane + nearPlane) * invd;
++    ogreMatrix(2, 3) = -2.0 * farPlane * nearPlane * invd;
++    ogreMatrix(3, 0) = 0.0;
++    ogreMatrix(3, 1) = 0.0;
++    ogreMatrix(3, 2) = -1.0;
++    ogreMatrix(3, 3) = 0.0;
++    if (ogreMatrix !=
+         Ogre2Conversions::Convert(this->ogreCamera->getProjectionMatrix()))
+     {
+       this->ogreCamera->setCustomProjectionMatrix(true,
+-          Ogre2Conversions::Convert(this->projectionMatrix));
++          Ogre2Conversions::Convert(ogreMatrix));
+     }
+   }
+ 
