@@ -1,0 +1,5 @@
+<library path="forward_travel_critic">
+  <class type="mppi::critics::ForwardTravelCritic" base_class_type="mppi::critics::CriticFunction">
+    <description>Prefer body-forward motion; relax lateral cost for a known obstacle ahead.</description>
+  </class>
+</library>

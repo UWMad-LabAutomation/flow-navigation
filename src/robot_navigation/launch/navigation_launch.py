@@ -12,6 +12,11 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
+from robot_simulation.graphics_configuration import graphics_environment
+from robot_simulation.sensor_configuration import (
+    sensor_launch_arguments, sensor_launch_configurations,
+)
+
 
 def generate_launch_description():
     """Return a complete map-based navigation launch description."""
@@ -25,6 +30,7 @@ def generate_launch_description():
     autostart = LaunchConfiguration('autostart')
     use_rviz = LaunchConfiguration('use_rviz')
     rviz_config = LaunchConfiguration('rviz_config')
+    nav_to_pose_bt = LaunchConfiguration('nav_to_pose_bt')
     world_file = LaunchConfiguration('world')
     sim_time_parameter = {
         'use_sim_time': ParameterValue(use_sim_time, value_type=bool),
@@ -48,7 +54,9 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(
                 simulation_share, 'launch', 'flow_base_sim.launch.py')),
-        launch_arguments={'world': world_file}.items(),
+        launch_arguments={
+            'world': world_file, **sensor_launch_configurations(),
+        }.items(),
     )
 
     map_server = Node(
@@ -115,7 +123,13 @@ def generate_launch_description():
         package='nav2_bt_navigator',
         executable='bt_navigator',
         name='bt_navigator',
-        parameters=common_parameters,
+        parameters=common_parameters + [{
+            # Keep a valid route instead of choosing a new one every second.
+            # This tree still checks for blockage and retains Nav2 recoveries.
+            'default_nav_to_pose_bt_xml': nav_to_pose_bt,
+            'default_nav_through_poses_bt_xml': os.path.join(
+                navigation_share, 'behavior_trees', 'navigate_through_poses_holonomic.xml'),
+        }],
         remappings=tf_remappings,
         output='screen',
     )
@@ -144,6 +158,14 @@ def generate_launch_description():
         name='collision_monitor',
         parameters=common_parameters,
         remappings=tf_remappings,
+        output='screen',
+    )
+
+    planar_velocity_limiter = Node(
+        package='robot_navigation',
+        executable='planar_velocity_limiter',
+        name='planar_velocity_limiter',
+        parameters=common_parameters,
         output='screen',
     )
 
@@ -180,13 +202,14 @@ def generate_launch_description():
         package='rviz2',
         executable='rviz2',
         arguments=['-d', rviz_config],
+        additional_env=graphics_environment(),
         parameters=[{
             'use_sim_time': ParameterValue(use_sim_time, value_type=bool),
         }],
         output='screen',
     )
 
-    return LaunchDescription([
+    return LaunchDescription(sensor_launch_arguments() + [
         DeclareLaunchArgument(
             'map',
             default_value=os.path.join(
@@ -206,6 +229,12 @@ def generate_launch_description():
             description='SDF world file to load in Gazebo.',
         ),
         DeclareLaunchArgument(
+            'nav_to_pose_bt',
+            default_value=os.path.join(
+                navigation_share, 'behavior_trees', 'navigate_holonomic.xml'),
+            description='Keep valid paths and replan on blockage; recover without spinning.',
+        ),
+        DeclareLaunchArgument(
             'use_sim_time', default_value='true',
             description='Use Gazebo time.',
         ),
@@ -220,7 +249,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'rviz_config',
             default_value=os.path.join(
-                nav2_share, 'rviz', 'nav2_default_view.rviz'),
+                navigation_share, 'config', 'flow_navigation.rviz'),
             description='RViz configuration file.',
         ),
         simulation,
@@ -233,6 +262,7 @@ def generate_launch_description():
         bt_navigator,
         waypoint_follower,
         velocity_smoother,
+        planar_velocity_limiter,
         collision_monitor,
         localization_manager,
         navigation_manager,

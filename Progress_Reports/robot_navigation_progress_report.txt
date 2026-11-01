@@ -1,461 +1,319 @@
 ROBOT NAVIGATION PROGRESS REPORT
-================================
-
-Date: 2026-09-19
+Date: 2026-10-28 | Owner: ZG
 Workspace: /home/zach/robot_ws
-Platform: Ubuntu 24.04 in WSL2, ROS 2 Jazzy, Gazebo Harmonic, RViz2, Nav2
-Robot: I2RT LinearBot FLOW holonomic base
-
-Purpose
--------
-This report records the work completed for two related tasks:
-
-1. Apply costmap inflation to a real robot occupancy-grid map. Import a map,
-   create increasing navigation costs around walls and obstacles, and deliver
-   the original map, inflated costmap, and a comparison visualization.
 
-2. Test path planning on the inflated map. Use A* or a ROS 2/Nav2 planner and
-   compare paths planned on the original occupancy grid and the inflated map.
-   Document the effects of inflation radius and cost values on clearance and
-   route selection.
-
-The project has a working simulated robot, Gazebo/RViz/Nav2 integration, and a
-procedurally generated maze with matching Gazebo walls and an occupancy map.
-It does not yet satisfy every deliverable in the two tasks. In particular, the
-current map is synthetic rather than a map captured from a real robot, the
-final global inflated-costmap artifact has not been exported, and a systematic
-original-versus-inflated path comparison has not been completed.
-
-
-Current completion status
--------------------------
-
-Task 1: Apply costmap inflation to a real robot map
-
-Status: PARTIAL
-
-Completed:
-
-- A Nav2 map-server pipeline can load an occupancy-grid YAML/PGM map.
-- A generated maze produces a matching PGM image and YAML metadata.
-- Nav2 static and obstacle costmap layers are configured.
-- The local costmap currently retains an inflation layer.
-- The project has been tested with RViz Map and Costmap displays.
-- The original map and generated Gazebo world use the same maze geometry.
-
-Not complete:
-
-- The current map is generated procedurally; it is not an occupancy grid
-  captured from a real robot.
-- The current global costmap intentionally has only static and laser obstacle
-  layers. Its inflation layer was removed during troubleshooting so that
-  static and live obstacles could be isolated. Therefore the current final
-  configuration does not yet provide the requested globally inflated map.
-- No exported inflated PGM/YAML/PNG artifact has been produced for delivery.
-- No final side-by-side or overlay visualization comparing the original map
-  with the inflated map has been produced.
-
-Task 2: Test path planning on the inflated map
-
-Status: PARTIAL
-
-Completed:
-
-- Nav2 is integrated with a global planner, local controller, costmaps, AMCL,
-  RViz, and Gazebo.
-- The current global planner is SmacPlanner2D, a cost-aware grid A* planner.
-- A clean test produced a successful short path and a successful full maze
-  start-to-goal ComputePathToPose action result with error_code 0 before the
-  latest global-costmap troubleshooting change.
-- RViz navigation goals have produced visible global paths and the simulated
-  base has moved under controller commands.
-- Controller and Gazebo command bridging has been observed working.
-
-Not complete:
-
-- A controlled comparison between planning on an original map and planning on
-  an inflated map has not been run.
-- Path length, minimum obstacle clearance, planning time, and route choice
-  have not been recorded for multiple inflation radii or cost-scaling values.
-- Interactive runs still sometimes abort with "Start occupied" or "no valid
-  path found". The reported map-frame pose can fall in an occupied maze cell
-  even when the Gazebo model appears visually centered in a corridor. This
-  points to a remaining map/TF/localization or live-obstacle-layer alignment
-  issue.
-
-
-Robot description and physical assumptions
--------------------------------------------
-
-Package: src/robot_description
-
-File: src/robot_description/urdf/flow_base.urdf.xacro
-
-- Defines the simplified FLOW base using URDF/Xacro.
-- Defines base_footprint and base_link navigation frames.
-- Defines a fixed base_footprint to base_link transform.
-- Defines a fixed base_link to laser_link transform.
-- Uses the documented footprint dimensions: 0.751 m by 0.542 m.
-- Uses an approximate base mass of 80 kg.
-- Uses a provisional base height of 0.200 m because a base-only height was not
-  available.
-- COM is undetermined. The provisional COM is the geometric center of the
-  rectangular base at z = base_height / 2.
-- Inertia is calculated as a uniform rectangular solid.
-- The README explicitly marks height, COM, and inertia as provisional and says
-  that measured values are needed before dynamic simulation or hardware use.
-
-This is a navigation simulation model, not a measured final dynamics model.
-
-
-Gazebo simulation
------------------
-
-Package: src/robot_simulation
-
-Files:
-
-- worlds/flow_base.sdf
-- launch/flow_base_sim.launch.py
-- robot_simulation/maze_generator.py
-- README.md
-
-The SDF world:
-
-- Uses Gazebo Harmonic systems and a ground plane.
-- Represents the base with a 0.751 m x 0.542 m x 0.200 m chassis.
-- Uses an 80 kg total approximation: 72 kg chassis plus four 2 kg wheels.
-- Uses Gazebo's MecanumDrive plugin as a holonomic approximation.
-- Accepts forward velocity, lateral velocity, and yaw rate.
-- Uses four wheel joints and anisotropic friction to approximate mecanum
-  roller behavior rather than modeling explicit rollers.
-- Publishes simulated odometry and an odom to base_footprint transform.
-- Includes a planar GPU lidar with 360 samples, 10 Hz update rate, and a
-  0.12 m to 12.0 m range.
-
-The simulation launch:
-
-- Starts Gazebo.
-- Starts ros_gz_bridge for /cmd_vel, /odom, /tf, and /scan.
-- Runs robot_state_publisher from the Xacro description.
-- Publishes the static laser frame connection required by the Gazebo sensor
-  frame.
-
-Manual simulation checks completed during development:
-
-- Forward motion using /cmd_vel.
-- Reverse motion using negative linear x.
-- Lateral holonomic motion using linear y.
-- In-place angular motion using angular z.
-- Odometry and TF inspection with /odom, /tf, and tf2_echo.
-- Direct Gazebo command testing was documented in robot_simulation/README.md.
-
-Known simulation limitations:
-
-- MecanumDrive and anisotropic friction are an approximation of the powered
-  caster/FLOW mechanics.
-- Wheel collision geometry and roller dynamics are simplified.
-- Height, COM, and inertia remain provisional.
-- The real I2RT FlowBaseClient/CAN bridge has not been implemented.
-
-
-Maze generation and map import
--------------------------------
-
-File: src/robot_simulation/robot_simulation/maze_generator.py
-
-The generator:
-
-- Uses recursive backtracking, matching the supplied Python maze algorithm.
-- Defaults to a 21 x 21 odd-sized maze.
-- Uses a repeatable integer seed when seed:=N is supplied.
-- Defaults to 2.5 m maze cells/corridors so the base has usable clearance.
-- Defaults to a 0.05 m occupancy-map resolution.
-- Defaults to 0.5 m wall height.
-- Writes static SDF collision and visual geometry for occupied maze cells.
-- Writes a trinary PGM map and matching YAML metadata.
-- Places the simulated base at the generated start cell.
-- Reports the generated start and goal coordinates.
-
-Default generated artifacts:
-
-- /tmp/flow_maze/maze_world.sdf
-- /tmp/flow_maze/maze.yaml
-- /tmp/flow_maze/maze.pgm
-
-For seed 42 with the default dimensions, the generated start and goal are
-approximately:
-
-- Start: (-22.5, 22.5)
-- Goal: (22.5, -22.5)
-
-The map verified during testing was 1050 x 1050 cells at 0.05 m/cell, with an
-origin of (-26.25, -26.25). The map server reported the map as loaded and
-published it on /map with frame_id map.
-
-File: src/robot_navigation/launch/maze_navigation_launch.py
-
-This launch file generates the maze artifacts before including the normal
-navigation launch. It exposes seed, output_dir, width, height, cell_size,
-resolution, wall_height, use_rviz, use_sim_time, and autostart arguments.
-
-
-Navigation architecture
------------------------
-
-Package: src/robot_navigation
-
-File: launch/navigation_launch.py
-
-The normal launch starts:
-
-- Gazebo simulation.
-- map_server using the supplied map YAML.
-- AMCL localization.
-- controller_server.
-- planner_server.
-- smoother_server.
-- behavior_server.
-- bt_navigator.
-- waypoint_follower.
-- velocity_smoother.
-- collision_monitor.
-- Localization and navigation lifecycle managers.
-- RViz using the Nav2 default view unless disabled.
-
-Data flow:
-
-Gazebo lidar -> /scan -> AMCL and local/global obstacle layers
-Gazebo odometry -> /odom and odom -> base_footprint
-robot_state_publisher -> base_footprint -> base_link and base_link -> laser_link
-map_server -> /map with frame_id map
-AMCL -> map -> odom after an initial pose is supplied
-Nav2 global costmap -> /global_costmap/costmap
-Nav2 local costmap -> local costmap topics
-SmacPlanner2D -> global path
-MPPI controller -> cmd_vel_nav
-Velocity smoother -> cmd_vel_smoothed
-Collision monitor -> /cmd_vel
-ros_gz_bridge -> Gazebo MecanumDrive
-
-The base navigation degrees of freedom are vx, vy, and yaw rate. The vertical
-rail and YAM arms are outside the navigation controller scope.
-
-
-Package inventory
------------------
-
-- robot_description contains the URDF/Xacro description, frame structure, and
-  provisional inertial model described above.
-- robot_simulation contains the Gazebo world, bridge launch, maze generator,
-  simulation tests, and simulation documentation.
-- robot_navigation contains Nav2 parameters, navigation launches, maze launch,
-  navigation tests, and navigation documentation.
-- robot_bringup exists as an initial ament_python package scaffold with package
-  metadata and standard tests, but it does not yet provide a top-level launch
-  system or hardware bringup.
-- A robot_base_bridge package is described in the project architecture, but it
-  is not currently present under src and no real FlowBaseClient/CAN interface
-  has been implemented.
-
-
-Current Nav2 configuration
---------------------------
-
-File: src/robot_navigation/config/nav2_flow_params.yaml
-
-Localization:
-
-- AMCL uses map, odom, and base_footprint frames.
-- AMCL uses OmniMotionModel for the holonomic base.
-- AMCL subscribes to /scan.
-- AMCL broadcasts map -> odom after receiving an initial pose.
-
-Robot footprint:
-
-- The configured rectangular footprint is approximately 0.751 m x 0.542 m.
-- footprint_padding is 0.02 m.
-
-Global costmap current state:
-
-- global_frame: map.
-- robot_base_frame: base_link.
-- resolution: 0.05 m.
-- static_layer subscribes to the transient-local /map.
-- obstacle_layer uses /scan for live laser obstacles.
-- The global inflation layer is currently removed for diagnostic purposes.
-- Current global plugins are [static_layer, obstacle_layer].
-
-Local costmap current state:
-
-- global_frame: odom.
-- robot_base_frame: base_link.
-- rolling 4 m x 4 m window.
-- obstacle_layer uses /scan.
-- inflation_layer remains enabled with a 0.70 m radius and cost scaling factor
-  3.0.
-
-Planner:
-
-- Current plugin: nav2_smac_planner::SmacPlanner2D.
-- downsample_costmap is false.
-- allow_unknown is true.
-- max_iterations is 1,000,000.
-- max_planning_time is 5.0 seconds.
-- cost_travel_multiplier is 2.0.
-- A previous NavFn configuration was replaced because long winding maze paths
-  reached the path-extraction limit in the installed Jazzy NavFn behavior.
-
-Controller:
-
-- Current controller: nav2_mppi_controller::MPPIController.
-- motion_model: Omni.
-- x, y, and yaw velocity and acceleration limits are configured.
-- The velocity chain is controller -> velocity smoother -> collision monitor
-  -> Gazebo bridge.
-
-The package declares nav2_smac_planner as an execution dependency.
-
-
-RViz and TF findings
---------------------
-
-RViz Fixed Frame must be exactly map. The /map topic and /global_costmap/costmap
-topic were both verified with one publisher and an RViz subscription.
-
-Important startup behavior:
-
-- map_server publishing /map does not by itself create a TF frame named map.
-- AMCL publishes map -> odom after receiving a 2D initial pose.
-- The global costmap waits for a usable transform to base_link.
-- Early "Invalid frame ID map" and transform extrapolation messages can occur
-  while AMCL and the costmap start. They should resolve after the initial pose
-  and TF chain are available.
-- RViz's Topic OK status only confirms the configured topic name. A display
-  with Width 0 and Height 0 has not received a valid OccupancyGrid yet.
-- The downsampled-costmap display is not used because downsample_costmap is
-  false and should be disabled in RViz.
-
-
-Validation performed
---------------------
-
-Build and package tests:
-
-- robot_description, robot_simulation, and robot_navigation built successfully
-  with colcon.
-- The simulation and navigation package tests reported 6 tests, 0 errors,
-  0 failures, and 2 skipped tests in the latest validation run.
-- Maze generation and SDF syntax were checked during development.
-- Generated maps loaded successfully in Nav2 map_server.
-
-Runtime checks:
-
-- /map reported nav_msgs/msg/OccupancyGrid with one map_server publisher.
-- /global_costmap/costmap reported one global_costmap publisher and an RViz
-  subscriber.
-- AMCL logged initialPoseReceived and Setting pose.
-- tf2_echo eventually produced map -> odom and map -> base_link transforms.
-- A clean SmacPlanner2D direct planner test returned SUCCEEDED and
-  error_code 0 for a full generated-maze route before the latest global
-  inflation diagnostic change.
-- Interactive navigation produced a path, generated velocity commands, and
-  moved the Gazebo base.
-
-Latest known runtime failure:
-
-- The planner aborted with "Start occupied" after the robot had moved.
-- One logged map-frame pose was approximately (-20.40, 15.81), which maps to
-  an occupied cell in the seed-42 maze. This indicates that the costmap and
-  localization estimate considered the robot to be in a wall cell, even when
-  the Gazebo model appeared visually centered in a corridor.
-- Other attempts reported "no valid path found" for selected goals.
-- The remaining investigation is to compare /amcl_pose, map -> base_link,
-  /odom, the static map, and live laser obstacle markings at the failure pose.
-
-
-How to reproduce the current simulation
-----------------------------------------
-
-From a clean terminal:
-
-    cd ~/robot_ws
-    source /opt/ros/jazzy/setup.bash
-    colcon build --symlink-install \
-      --packages-select robot_description robot_simulation robot_navigation
-    source install/setup.bash
-    ros2 launch robot_navigation maze_navigation_launch.py seed:=42
-
-In RViz:
-
-1. Set Global Options / Fixed Frame to map.
-2. Add or verify Map on /map.
-3. Set the initial pose near the generated start, approximately (-22.5, 22.5)
-   for seed 42.
-4. Verify /global_costmap/costmap is selected for the global costmap display.
-5. Send a goal near the center of a known free corridor.
-
-Useful terminal checks:
-
-    ros2 topic info /map -v
-    ros2 topic info /global_costmap/costmap -v
-    ros2 topic echo /global_costmap/costmap --once
-    ros2 topic echo /amcl_pose --once
-    ros2 run tf2_ros tf2_echo map base_link
-    ros2 lifecycle get /amcl
-    ros2 lifecycle get /planner_server
-    ros2 topic echo /cmd_vel
-    ros2 topic echo /odom
-
-
-Remaining work for the two assignment tasks
---------------------------------------------
-
-1. Import a real occupancy-grid map produced by a robot and preserve the map
-   YAML/PGM as the original-map deliverable.
-
-2. Restore or create a global inflation configuration for that real map. Keep
-   lethal wall cells, select an inflation radius based on the measured robot
-   footprint, and tune the cost scaling factor.
-
-3. Export the resulting inflated costmap in a documented image/data format.
-   Record map resolution, origin, thresholds, inflation radius, and cost
-   scaling factor beside the artifact.
-
-4. Produce a visualization with the original occupancy grid and inflated
-   costmap side by side or overlaid. Include a legend for free, occupied,
-   unknown, and inflated-cost regions.
-
-5. Run the same start/goal pairs on the original and inflated maps using A*
-   or SmacPlanner2D. Record path length, planning time, minimum clearance,
-   and whether each route is valid.
-
-6. Repeat the comparison for multiple inflation radii and cost-scaling
-   factors. Explain how larger inflation margins reject narrow routes or move
-   paths toward corridor centers, and how smaller margins permit routes closer
-   to obstacles.
-
-7. Resolve the current Start occupied behavior by validating map-to-world
-   alignment, AMCL pose, odometry, laser frame, footprint, and live obstacle
-   layer data at the failure pose.
-
-8. Re-enable the global inflation layer after the diagnostic binary-costmap
-   experiment and retest both global planning and controller execution.
-
-9. Keep the final report with the original map, inflated map, comparison
-   visualization, parameter values, commands, and measured results.
-
-
-Files most relevant to future work
------------------------------------
-
-- src/robot_description/urdf/flow_base.urdf.xacro
-- src/robot_simulation/worlds/flow_base.sdf
-- src/robot_simulation/launch/flow_base_sim.launch.py
-- src/robot_simulation/robot_simulation/maze_generator.py
-- src/robot_navigation/launch/navigation_launch.py
-- src/robot_navigation/launch/maze_navigation_launch.py
-- src/robot_navigation/config/nav2_flow_params.yaml
-- src/robot_navigation/README.md
-- src/robot_simulation/README.md
-- src/robot_description/README.md
+CURRENT TASKS
+
+1. Hybrid A* global planning - IMPLEMENTED AND TESTED
+   SmacPlannerHybrid now uses forward Dubins motion, 72 heading bins, a 0.4 m
+   minimum path radius and rectangular footprint checks. Three independent
+   start/goal planning queries passed in a reproducible mapped obstacle room.
+   Hybrid A* is curvature constrained; it does not plan pure sideways paths.
+
+2. Holonomic MPPI local navigation - IMPLEMENTED AND DEMONSTRATED
+   MPPI Omni favors forward-facing travel on clear paths. Lateral motion is
+   retained for avoidance/corrections; reverse is limited to 0.10 m/s. Total planar command speed is capped at 0.63 m/s,
+   including diagonals. The default behavior trees no longer use Spin recovery.
+
+3. Camera localization and unmapped-obstacle navigation - CONTROLLED TEST PASSED
+   AMCL now skips inconsistent scan beams and uses lower simulation odometry
+   noise. With an obstacle inserted after planning, all three navigation goals
+   succeeded against actual Gazebo pose checks. Full-maze reliability and
+   physical-robot calibration remain open.
+
+CURRENT SIMULATION AND CAMERA SCANNER
+
+ROS 2 Jazzy, Gazebo Harmonic, Nav2, and RViz run together in WSL2. A generated
+maze supplies matching Gazebo walls and an occupancy-grid map. AMCL estimates
+the robot's pose, SmacPlannerHybrid plans routes, and MPPI Omni drives
+the simulated FLOW base. RViz displays the map, costmaps, scan, and planned path.
+The changes and validation below concern simulation. Physical camera integration
+was not tested in this checkout.
+
+A CPU ray-based approximation of the RealSense D435i now supplies /scan.
+The simulation pipeline is:
+
+  CPU ray casting against Gazebo collision geometry
+  -> synthetic /camera/depth/points (PointCloud2)
+  -> existing camera_to_scan -> /scan (LaserScan) -> Nav2
+
+No LiDAR sensor or depth-image renderer runs in the default CPU mode. The
+existing camera_to_scan node is the sole /scan publisher. The optional
+rendered camera remains available with camera_backend:=render; only that
+mode needs the earlier Gazebo projection correction. Gazebo and RViz windows
+still render when enabled, but CPU sensing also runs without either display.
+
+The camera mount defaults to X=0, Y=0, Z=2.0 m, approximately the highest
+position with the elevator fully extended. The supplied D435i specifications
+are 87 degrees horizontal by 58 degrees vertical FOV, 0.3-3.0 m depth range,
+and a 1280x720 image profile at 30 FPS. Simulation samples the same viewing
+volume using an adjustable 80x45 ray grid at a requested 30 Hz of simulation
+time. This sparse sampling is separate from the physical camera resolution.
+Auto pitch is about 26.48 degrees down at 2.0 m, placing the lower FOV edge
+on the ground 1 m beyond the robot's front edge.
+
+The point cloud is transformed and height-filtered to remove floor returns
+before projection into /scan. AMCL, the obstacle costmaps, and collision monitor
+use this camera-derived scan. The height filter retains points 0.10-1.00 m
+above ground. Missing returns remain unknown. The simulation models geometric
+coverage and occlusion, including moved and inserted obstacles, but it does
+not have exactly the same perceptive abilities as a real D435i: sparse rays,
+collision meshes, stereo failures, noise, lighting and material effects can
+change detections. Hardware validation is still necessary.
+
+The intended physical-robot pipeline remains:
+
+  D435i -> RealSense ROS driver -> PointCloud2
+  -> camera_to_scan -> /scan -> Nav2
+
+The CPU plugin is simulation-only and is not part of that hardware pipeline.
+No physical RealSense bringup launch exists in this checkout, so this work
+does not establish that hardware launch or driver integration is complete.
+
+VALIDATION OF CPU CAMERA MODE
+
+The plugin and simulation packages build with colcon. Live tests without a
+display checked both FOVs, cloud coordinates, a collision-only reference wall,
+dynamic obstacle insertion/movement, first-hit occlusion, and near/far depth
+clipping. A full 21x21 maze test with seed 2305920845, 80x45 rays and no GUI
+produced approximately 11.7 /scan messages per wall-clock second at a requested
+30 Hz of simulation time. Nav2 became active in about 8 seconds from launch,
+with the test supplying the initial pose automatically. A short NavigateToPose
+goal succeeded with error code 0. /scan had exactly one publisher,
+camera_to_scan, and measured scan age was about 1-2 ms in simulation time.
+These measurements are specific
+to this WSL run and do not guarantee GUI performance or full-maze reliability.
+
+The earlier 160x90 ray trial was slower in the large maze (about 4 scans/s),
+so the default was reduced to 80x45. The earlier rendered-camera path used
+CPU software rendering (llvmpipe) and was much more demanding. Simulation
+launches now isolate Gazebo topics and use the current world's clock to avoid
+interference from leftover Gazebo servers. CPU world generation also replaces
+the ground-plane collision with a thin slab matching the visible floor. This
+fixes inaccurate ray intersections from DART's oversized internal plane box,
+which otherwise produced false floor obstacles. Floor height and the existing
+0.10-1.00 m obstacle filter are preserved. A live floor regression test measured
+less than 0.4 mm height error. The source SDF is unchanged; the finite floor
+extends over the visible 100x100 m area in the supplied world.
+
+CURRENT FORWARD-PREFERRED HOLONOMIC CONFIGURATION
+
+The latest user requirement is to walk forward like a person on clear paths,
+with sideways motion available for obstacle avoidance. MPPI remains Omni, with
+1000 trajectories, 48 steps and model_dt=0.05 s (2.4 s horizon). Forward and
+lateral limits remain 0.63 m/s; reverse is limited to 0.10 m/s and yaw to
+0.8 rad/s. The dedicated limiter still caps hypot(vx,vy) to 0.63 m/s.
+
+Hybrid A* now uses forward Dubins paths. PathAngle/PreferForward and path-
+orientation alignment favor facing the route. Twirling weight is reduced from
+10 to 0.5 so necessary turns are permitted. The initial native-critic-only
+trials still allowed sideways startup, so a workspace ForwardTravelCritic now
+scores excessive predicted body-lateral velocity inside MPPI. Clear-path
+weight is 60 outside a 15-degree forward cone. It reduces to 4 only when facing
+the route within 0.5 rad and a known lethal obstacle lies within 1.5 m ahead.
+It uses the existing local costmap and does not clip lateral commands afterward.
+
+The following older validation sections record the preceding unrestricted-Omni
+profiles. The latest IMU accuracy and forward-start results are at the end of
+this report and in Progress_Reports/forward_navigation_2026-10-28/.
+
+VALIDATED MOTION (MAPPED OBSTACLE COURSE, BEFORE AMCL ADJUSTMENT)
+
+Three planning queries succeeded: (0,0,0) -> (4,0,0),
+(1,1,0) -> (4,-1,pi/2), and (4,1.5,0) -> (1,1.5,pi).
+The paths contained 63, 59 and 42 poses, with no interpolated padded-footprint
+intersection against the test obstacles. All three navigation goals succeeded:
+(1,1,0), (4,0,0), and (4,1.4,0). Actual Gazebo endpoint position errors were
+0.284, 0.032 and 0.175 m. The first error exceeds Nav2's 0.25 m estimated-pose
+tolerance because localization itself has error. This test required actual
+position error below 0.4 m and checked measured collision-free travel.
+
+Peak final command speed was 0.610 m/s, peak lateral command 0.395 m/s, and
+integrated measured body-lateral travel 2.466 m. Speed is permitted up to
+0.63 m/s, but trajectory optimization slows near obstacles and goals. Separate
+ROS tests verified the 0.63 m/s diagonal cap, yaw cap, stale-command stop and
+nonfinite-command stop. The package tests passed (36 passed, 1 existing skip).
+A short maze goal also succeeded with normal AMCL, camera_to_scan as the sole
+/scan publisher, and no simulator ground-truth localization input.
+
+Evidence: Progress_Reports/holonomic_navigation_2026-10-28/
+  validation_summary.json
+  paths_and_navigation.png (measured plot; not an RViz screenshot)
+Reproduce with src/robot_navigation/scripts/validate_holonomic_navigation.py.
+The controlled run used an 80x45 CPU ray grid at requested 10 Hz, no Gazebo GUI,
+and no RViz. It demonstrates navigation, not full-maze or hardware reliability.
+
+The forward D435i still has side/rear blind spots during holonomic travel.
+Maximum permitted speed does not establish safe motion into unobserved space.
+Hardware camera calibration, odometry noise, stopping distance, and obstacle
+coverage must be measured. Slow simulation time and RViz cloud/TF timing are
+separate from the planner/controller changes.
+
+INSERTED-OBSTACLE VALIDATION WITH FINAL AMCL SETTINGS
+
+An extra 0.5 x 0.5 x 0.8 m obstacle was inserted at (2.8,1.4) after the initial
+planning queries and first navigation goal. It was absent from the static map.
+The camera-derived scan supplied its obstacle observations. The previous AMCL
+settings failed this case: reported success differed from Gazebo by 2.17 m.
+The final settings use beam skipping (distance 0.5 m, threshold 0.3, error
+threshold 0.9), alpha1/3=0.002, and alpha2/4/5=0.0005 for simulated odometry.
+
+With those settings, all three goals passed actual-pose checks: errors were
+0.291, 0.048 and 0.192 m. Measured travel avoided all test obstacles. Peak final
+command speed was 0.566 m/s, peak lateral command was 0.413 m/s, and integrated
+body-lateral travel was 2.561 m. Localization error at the goal checks was
+0.102, 0.045 and 0.050 m. No ground-truth pose was supplied to Nav2.
+
+The final maze regression also succeeded (seed 2305920845; short goal from
+(-22.5,22.5) to (-20.8,22.5)); actual odometry displacement was about
+(1.448,0.062) m, within the goal tolerance. This does not establish full-maze
+performance. The simulation still ran below real time on the loaded WSL PC.
+
+Additional evidence in the same report directory:
+  inserted_obstacle_summary.json
+  inserted_obstacle_navigation.png
+Reproduce this case by adding --dynamic-obstacle to the validation script.
+
+D435i IMU AND WHEEL ODOMETRY FUSION (2026-10-28)
+
+The default simulation now enables use_imu:=true. Gazebo's physics IMU shares
+the camera's adjustable mount and supplies gyro/accel at requested 100 Hz.
+It requires no image renderer. Synthetic absolute attitude is marked unavailable
+and is not fused. Explicit simulation covariance accompanies the measurements.
+The new robot_state_estimation package uses robot_localization EKF at 50 Hz:
+
+  wheel vx/vy/yaw rate + camera gyro -> filtered /odom
+  EKF owns odom -> base_footprint; AMCL continues to own map -> odom.
+
+The filter transforms all gyro axes from the pitched sensor frame into the base
+frame before applying planar constraints. It retains wheel lateral velocity for
+holonomic navigation. IMU orientation and acceleration are excluded: the D435i
+has no absolute yaw reference, and gravity/elevator/arm motion must not become
+base translation. Raw Gazebo odometry TF is not bridged when EKF is enabled.
+use_imu:=false restores the previous wheel-only simulation pipeline.
+
+A synthetic sensor test deliberately biased wheel yaw rate to 0.30 rad/s while
+the pitched-camera gyro represented a true 0.20 rad/s. The EKF estimated
+0.20025 rad/s and preserved 0.20 m/s lateral velocity. This verifies that the
+IMU affects the estimate and that the camera tilt is handled correctly.
+
+The standard obstacle course passed with the IMU/EKF enabled. Three planning
+queries and three actual navigation goals succeeded, including a newly inserted
+unmapped obstacle. Actual endpoint errors were 0.297, 0.072 and 0.206 m. Peak
+command speed reached the 0.63 m/s limit, lateral command reached 0.369 m/s,
+and measured body-lateral travel was 2.794 m. Camera_to_scan remained the sole
+/scan publisher. Physical D435i hardware was not connected/tested; full-maze
+reliability and moving-elevator calibration remain open.
+
+Physical configuration is documented in src/robot_state_estimation/README.md:
+enable_gyro:=true enable_accel:=true unite_imu_method:=2 on the RealSense driver,
+then supply its actual combined IMU topic and the base wheel odometry to the
+standalone state_estimation.launch.py. Hardware must use measured camera TF
+and sensor/wheel covariance. IMU fusion can improve short-term odometry; it does
+not supply absolute map position or remove every AMCL map-matching failure.
+
+Evidence: Progress_Reports/imu_localization_2026-10-28/
+  validation_summary.json
+  imu_navigation.png
+
+A separate live physics check confirmed the actual camera-to-base gyro rotation:
+commanded yaw rate 0.300 rad/s, projected gyro mean 0.29993 rad/s, filtered yaw
+rate 0.29925 rad/s, and filtered lateral velocity 0.1502 m/s for a 0.15 m/s
+lateral command. Observed rates were about 95 Hz IMU, 20 Hz wheel odometry and
+50 Hz filtered odometry in simulation time. EKF was the sole /odom publisher;
+ROS /tf publishers were EKF and robot_state_publisher, with no raw Gazebo TF
+bridge. Simulation/navigation package tests passed (64 passed, 2 existing
+copyright skips), and the new state-estimation Python files passed lint checks.
+
+LATEST IMU ACCURACY AND FORWARD STARTUP CHECKS (2026-10-28)
+
+A 24.035 s empty-world physics test exercised straight forward travel, a left
+curve, a curved sidestep, forward travel again, and stopping. Gazebo ground
+truth was interpolated to each IMU/EKF simulation timestamp, not compared at
+mismatched receive times. Gyro rate RMSE was 0.001019 rad/s; integrated gyro
+heading maximum error was 0.043 degrees. EKF position RMSE was 6.78 mm and
+maximum error 9.03 mm. EKF heading RMSE was 0.065 degrees and maximum error
+0.116 degrees. These are configured ideal-physics/noise simulation results,
+not physical RealSense calibration. No absolute simulator attitude entered
+navigation. AMCL map pose remains a separate source of uncertainty.
+
+Clear-start validation used an empty room with boundary walls outside the
+1.5 m front-avoidance zone at startup. Two turning/forward goals succeeded.
+Body-forward displacement accounted for 99.94% and 98.82% of traveled distance.
+The first 0.5 m stayed inside the forward 87-degree horizontal window for
+100% and 90.85% of measured translation, respectively. Small tracking/turning
+corrections are allowed; this is forward preference, not a visibility guarantee.
+
+The inserted-obstacle course also passed all three goals. Peak lateral command
+was 0.0849 m/s with 0.452 m of measured body-lateral travel, demonstrating that
+avoidance corrections remain available. Peak total command speed was 0.63 m/s.
+Timestamp-matched EKF maximum errors during this course were 7.0 mm / 0.244
+degrees; AMCL map-pose maximum errors were 0.146 m / 3.25 degrees. Thus accurate
+IMU odometry does not make global map localization exact.
+
+The user's actual maze seed, 1400869175, starts facing an east wall with the
+open passage to the south. A new short test navigated from (-22.5,22.5,0) to
+(-22.5,20.8,-pi/2). It succeeded at actual position (-22.447,20.731), about
+0.087 m from the goal. Forward displacement accounted for 99.59% of travel;
+the first 0.5 m was 99.21% forward and entirely inside the forward camera
+window. This reproduces the corner-start geometry that caused the report of
+blind sideways startup. It is a short regression, not a full-maze guarantee.
+
+One collision-monitor teardown segfault was observed after that successful
+maze goal during simultaneous SIGINT shutdown. The reusable navigation checker
+now shuts down lifecycle-managed Nav2 nodes before stopping simulation clock/TF.
+This post-goal shutdown issue was not counted as a navigation failure or hidden.
+
+Current evidence:
+  forward_navigation_2026-10-28/imu_accuracy_summary.json
+  forward_navigation_2026-10-28/imu_accuracy.png
+  forward_navigation_2026-10-28/imu_accuracy_samples.npz
+  forward_navigation_2026-10-28/navigation_summary.json
+  forward_navigation_2026-10-28/clear_start.png
+  forward_navigation_2026-10-28/inserted_obstacle.png
+  forward_navigation_2026-10-28/maze_corner_start.png
+
+Final checks: robot_mppi_critics and robot_navigation built successfully; 38
+checks/tests passed with one existing copyright skip. State-estimation Python
+lint checks passed. The old user launch was shut down via Nav2 lifecycle
+services (both returned success), followed by the authorized Ctrl+C. Its Gazebo
+and RViz processes exited and the VS Code WSL terminal remained at its shell.
+
+VISIBLE GAZEBO REPAIR AND PERFORMANCE CHECKS (2026-10-28)
+
+Interactive launches and navigation/IMU validation now keep gui:=true. Both
+Gazebo and RViz are required for these interactive checks; headless operation
+is no longer suggested as the fix for poor performance. The earlier results
+above were obtained before this change and do not establish GUI performance.
+
+A host OpenGL probe found that default WSL rendering selected llvmpipe (CPU
+software rendering). Launch-local Mesa D3D12 selection used the GTX 1660 SUPER
+successfully. Gazebo's Ogre2 log confirmed D3D12 and actual window captures
+showed the loaded room/maze with the insertion toolbar. The unresponsive black
+launch was stopped and restarted. No system graphics libraries or Windows/WSL
+settings were modified. Explicit user graphics overrides are respected; native
+Linux/Jetson selection remains unchanged. This graphics use is for interfaces;
+MPPI, Hybrid A*, EKF and synthetic depth ray casting remain CPU based. The real
+robot needs no Gazebo renderer.
+
+With both interfaces visible, the small-room test passed all three Hybrid A*
+planning queries and all three navigation goals with an inserted unmapped box.
+Goal position errors were 0.056, 0.024 and 0.098 m. Peak command speed remained
+0.63 m/s. camera_to_scan was the only /scan publisher. Whole-run real-time
+factor was 0.781. EKF maximum position/heading errors were 6.9 mm / 0.232 deg;
+AMCL map-pose maximum errors remained larger at 0.154 m / 3.07 deg.
+
+The full 21x21 maze was slower. Its occupied wall row runs now become equivalent
+rectangular boxes rather than separate boxes per cell. For seed 1400869175 the
+count dropped from 242 to 126. Same-seed, visible-GUI steady measurement windows
+improved from 0.345 to 0.603 real-time factor. The requested camera rate was
+10 Hz simulation time; measured /scan wall-clock rates were 3.46 and 5.98 Hz.
+Maximum observed scan ages were 3 and 7 ms simulation time. The corner-start
+navigation goal passed both before and after merging. Physics timestep, camera
+FOV/range and 80x45 sampling were unchanged. Wall-coverage regression tests
+passed on three maze seeds. Full real-time performance remains unproven.
+
+Evidence: gui_rendering_2026-10-28/ contains actual Gazebo window captures,
+navigation plotting, interactive_navigation_summary.json and maze_performance.json.
+Simulation tests passed: 37 passed, one existing copyright skip. Navigation
+tests passed: 36 passed, one existing copyright skip. Both packages built.

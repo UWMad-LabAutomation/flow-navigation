@@ -16,7 +16,9 @@ setup(
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
         (os.path.join('share', package_name, 'config'),
-            glob('config/*.yaml')),
+            glob('config/*.yaml') + glob('config/*.rviz')),
+        (os.path.join('share', package_name, 'behavior_trees'),
+            glob('behavior_trees/*.xml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -31,6 +33,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'planar_velocity_limiter = robot_navigation.planar_velocity_limiter:main',
         ],
     },
 )
