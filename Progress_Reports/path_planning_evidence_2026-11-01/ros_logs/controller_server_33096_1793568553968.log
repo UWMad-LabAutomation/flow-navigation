@@ -1,0 +1,62 @@
+[INFO] [1793568554.014065647] [controller_server]: 
+	controller_server lifecycle node launched. 
+	Waiting on external lifecycle transitions to activate
+	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[INFO] [1793568554.037107325] [controller_server]: Creating controller server
+[INFO] [1793568554.056305035] [local_costmap.local_costmap]: 
+	local_costmap lifecycle node launched. 
+	Waiting on external lifecycle transitions to activate
+	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[INFO] [1793568554.058088474] [local_costmap.local_costmap]: Creating Costmap
+[INFO] [1793568554.457969191] [controller_server]: Configuring controller interface
+[INFO] [1793568554.458003777] [controller_server]: getting progress checker plugins..
+[INFO] [1793568554.458919016] [controller_server]: getting goal checker plugins..
+[INFO] [1793568554.459216856] [controller_server]: Controller frequency set to 20.0000Hz
+[INFO] [1793568554.459308676] [local_costmap.local_costmap]: Configuring
+[INFO] [1793568554.486269783] [local_costmap.local_costmap]: Using plugin "static_layer"
+[INFO] [1793568554.500701677] [local_costmap.local_costmap]: Subscribing to the map topic (/map) with transient local durability
+[INFO] [1793568554.507627670] [local_costmap.local_costmap]: Initialized plugin "static_layer"
+[INFO] [1793568554.507704061] [local_costmap.local_costmap]: Using plugin "obstacle_layer"
+[INFO] [1793568554.510491068] [local_costmap.local_costmap]: Subscribed to Topics: scan
+[INFO] [1793568554.519612154] [local_costmap.local_costmap]: Initialized plugin "obstacle_layer"
+[INFO] [1793568554.519690694] [local_costmap.local_costmap]: Using plugin "inflation_layer"
+[INFO] [1793568554.525198651] [local_costmap.local_costmap]: Initialized plugin "inflation_layer"
+[INFO] [1793568554.620284171] [local_costmap.local_costmap]: StaticLayer: Resizing static layer to 240 X 190 at 0.050000 m/pix
+[INFO] [1793568554.620784247] [controller_server]: Created progress_checker : progress_checker of type nav2_controller::SimpleProgressChecker
+[INFO] [1793568554.622379170] [controller_server]: Controller Server has progress_checker  progress checkers available.
+[INFO] [1793568554.623707177] [controller_server]: Created goal checker : general_goal_checker of type nav2_controller::SimpleGoalChecker
+[INFO] [1793568554.625712680] [controller_server]: Controller Server has general_goal_checker  goal checkers available.
+[INFO] [1793568554.628514757] [controller_server]: Created controller : FollowPath of type nav2_mppi_controller::MPPIController
+[INFO] [1793568554.632435864] [controller_server]: Controller period is equal to model dt. Control sequence shifting is ON
+[INFO] [1793568554.635569047] [controller_server]: ConstraintCritic instantiated with 1 power and 4.000000 weight.
+[INFO] [1793568554.635617840] [controller_server]: Critic loaded : mppi::critics::ConstraintCritic
+[INFO] [1793568554.637056437] [controller_server]: InflationCostCritic instantiated with 1 power and 300.000000 / 0.015000 weights. Critic will collision check based on footprint cost.
+[INFO] [1793568554.637092593] [controller_server]: Critic loaded : mppi::critics::CostCritic
+[INFO] [1793568554.637560269] [controller_server]: GoalCritic instantiated with 1 power and 5.000000 weight.
+[INFO] [1793568554.637579307] [controller_server]: Critic loaded : mppi::critics::GoalCritic
+[INFO] [1793568554.638418992] [controller_server]: GoalAngleCritic instantiated with 1 power, 3.000000 weight, 0.500000 angular threshold and symmetric_yaw_tolerance disabled
+[INFO] [1793568554.638442172] [controller_server]: Critic loaded : mppi::critics::GoalAngleCritic
+[INFO] [1793568554.641955904] [controller_server]: ReferenceTrajectoryCritic instantiated with 1 power and 5.000000 weight
+[INFO] [1793568554.642011090] [controller_server]: Critic loaded : mppi::critics::PathAlignCritic
+[INFO] [1793568554.646153085] [controller_server]: Critic loaded : mppi::critics::PathFollowCritic
+[INFO] [1793568554.651386200] [controller_server]: PathAngleCritic instantiated with 1 power and 10.000000 weight. Mode set to: Forward Preference
+[INFO] [1793568554.651596344] [controller_server]: Critic loaded : mppi::critics::PathAngleCritic
+[INFO] [1793568554.652127030] [controller_server]: PreferForwardCritic instantiated with 1 power and 5.000000 weight.
+[INFO] [1793568554.652147106] [controller_server]: Critic loaded : mppi::critics::PreferForwardCritic
+[INFO] [1793568554.656065962] [controller_server]: Critic loaded : mppi::critics::ForwardTravelCritic
+[INFO] [1793568554.656861399] [controller_server]: TwirlingCritic instantiated with 1 power and 0.500000 weight.
+[INFO] [1793568554.656882365] [controller_server]: Critic loaded : mppi::critics::TwirlingCritic
+[INFO] [1793568554.664301397] [controller_server]: Optimizer reset
+[INFO] [1793568554.679344759] [MPPIController]: Configured MPPI Controller: FollowPath
+[INFO] [1793568554.679411782] [controller_server]: Controller Server has FollowPath  controllers available.
+[INFO] [1793568556.236216941] [controller_server]: Activating
+[INFO] [1793568556.236265707] [local_costmap.local_costmap]: Activating
+[INFO] [1793568556.236280943] [local_costmap.local_costmap]: Checking transform
+[INFO] [1793568556.236327046] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1793568556.737005773] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1793568557.236449428] [local_costmap.local_costmap]: Timed out waiting for transform from base_link to odom to become available, tf error: Invalid frame ID "odom" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1793568557.737097188] [local_costmap.local_costmap]: start
+[WARN] [1793568557.942893070] [controller_server]: Parameter controller_server.verbose not found
+[INFO] [1793568557.945570735] [controller_server]: Optimizer reset
+[INFO] [1793568557.946453188] [MPPIController]: Activated MPPI Controller: FollowPath
+[INFO] [1793568557.946523802] [controller_server]: Creating bond (controller_server) to lifecycle manager.

@@ -1,0 +1,18 @@
+[INFO] [1793568554.103604976] [amcl]: 
+	amcl lifecycle node launched. 
+	Waiting on external lifecycle transitions to activate
+	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[INFO] [1793568554.105183203] [amcl]: Creating
+[INFO] [1793568554.321782081] [amcl]: Configuring
+[INFO] [1793568554.321871972] [amcl]: initTransforms
+[INFO] [1793568554.357677752] [amcl]: initPubSub
+[INFO] [1793568554.389752665] [amcl]: Subscribed to map topic.
+[INFO] [1793568554.424207259] [amcl]: Received a 240 X 190 map @ 0.050 m/pix
+[INFO] [1793568554.537793841] [amcl]: Activating
+[INFO] [1793568554.537858679] [amcl]: Creating bond (amcl) to lifecycle manager.
+[INFO] [1793568557.276442682] [amcl]: initialPoseReceived
+[INFO] [1793568557.276732596] [amcl]: Setting pose (0.945000): 0.000 0.000 0.000
+[INFO] [1793568557.803794658] [amcl]: createLaserObject
+[INFO] [1793568558.277566306] [amcl]: initialPoseReceived
+[WARN] [1793568558.277699159] [amcl]: Failed to transform initial pose in time (Lookup would require extrapolation into the past.  Requested time 1.832000 but the earliest data is at time 2.400000, when looking up transform from frame [base_footprint] to frame [odom])
+[INFO] [1793568558.277719364] [amcl]: Setting pose (1.832000): 0.000 0.000 0.000

@@ -1,0 +1,11 @@
+[INFO] [1793568554.192979805] [lifecycle_manager_localization]: Creating
+[INFO] [1793568554.242470789] [lifecycle_manager_localization]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[INFO] [1793568554.287311243] [lifecycle_manager_localization]: [34m[1mStarting managed nodes bringup...[0m[0m
+[INFO] [1793568554.287356850] [lifecycle_manager_localization]: [34m[1mConfiguring map_server[0m[0m
+[INFO] [1793568554.321376277] [lifecycle_manager_localization]: [34m[1mConfiguring amcl[0m[0m
+[INFO] [1793568554.422580762] [lifecycle_manager_localization]: [34m[1mActivating map_server[0m[0m
+[INFO] [1793568554.537339517] [lifecycle_manager_localization]: Server map_server connected with bond.
+[INFO] [1793568554.537397926] [lifecycle_manager_localization]: [34m[1mActivating amcl[0m[0m
+[INFO] [1793568554.659760679] [lifecycle_manager_localization]: Server amcl connected with bond.
+[INFO] [1793568554.659966433] [lifecycle_manager_localization]: [34m[1mManaged nodes are active[0m[0m
+[INFO] [1793568554.659983469] [lifecycle_manager_localization]: [34m[1mCreating bond timer...[0m[0m

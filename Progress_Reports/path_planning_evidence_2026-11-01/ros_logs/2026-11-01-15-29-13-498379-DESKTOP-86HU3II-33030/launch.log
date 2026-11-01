@@ -1,0 +1,27 @@
+1793568553.5001733 [INFO] [launch]: All log files can be found below /home/zach/robot_ws/src/path_planning_evidence_2026-11-01/ros_logs/2026-11-01-15-29-13-498379-DESKTOP-86HU3II-33030
+1793568553.5003166 [INFO] [launch]: Default logging verbosity is set to INFO
+1793568553.5935516 [INFO] [launch.user]: FLOW WSLg GUI graphics: Mesa D3D12 GPU rendering
+1793568553.5937054 [INFO] [launch.user]: FLOW sensor=camera; camera_backend=cpu; generated world=/tmp/flow_sensors_m2_z1a8e/world.sdf
+1793568553.9641101 [INFO] [gazebo-1]: process started with pid [33050]
+1793568553.9643331 [INFO] [parameter_bridge-2]: process started with pid [33051]
+1793568553.9644387 [INFO] [robot_state_publisher-3]: process started with pid [33052]
+1793568553.9645121 [INFO] [parameter_bridge-4]: process started with pid [33054]
+1793568553.9645908 [INFO] [inertial_measurements-5]: process started with pid [33055]
+1793568553.9646604 [INFO] [ekf_node-6]: process started with pid [33056]
+1793568553.9647522 [INFO] [parameter_bridge-7]: process started with pid [33057]
+1793568553.9648457 [INFO] [pointcloud_to_laserscan_node-8]: process started with pid [33058]
+1793568553.9649861 [INFO] [map_server-9]: process started with pid [33059]
+1793568553.9745395 [INFO] [amcl-10]: process started with pid [33092]
+1793568553.9747231 [INFO] [controller_server-11]: process started with pid [33096]
+1793568553.9748220 [INFO] [planner_server-12]: process started with pid [33107]
+1793568553.9749124 [INFO] [smoother_server-13]: process started with pid [33110]
+1793568553.9749954 [INFO] [behavior_server-14]: process started with pid [33113]
+1793568553.9750807 [INFO] [bt_navigator-15]: process started with pid [33118]
+1793568553.9751844 [INFO] [waypoint_follower-16]: process started with pid [33123]
+1793568553.9752710 [INFO] [velocity_smoother-17]: process started with pid [33128]
+1793568553.9753780 [INFO] [planar_velocity_limiter-18]: process started with pid [33132]
+1793568553.9754691 [INFO] [collision_monitor-19]: process started with pid [33149]
+1793568553.9755645 [INFO] [lifecycle_manager-20]: process started with pid [33155]
+1793568553.9756618 [INFO] [lifecycle_manager-21]: process started with pid [33161]
+1793568553.9757276 [INFO] [rviz2-22]: process started with pid [33162]
+1793568634.9788129 [INFO] [rviz2-22]: process has finished cleanly [pid 33162]

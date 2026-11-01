@@ -1,0 +1,34 @@
+[INFO] [1793568554.282663642] [planner_server]: 
+	planner_server lifecycle node launched. 
+	Waiting on external lifecycle transitions to activate
+	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[INFO] [1793568554.290516995] [planner_server]: Creating
+[INFO] [1793568554.384350706] [global_costmap.global_costmap]: 
+	global_costmap lifecycle node launched. 
+	Waiting on external lifecycle transitions to activate
+	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[INFO] [1793568554.389158730] [global_costmap.global_costmap]: Creating Costmap
+[INFO] [1793568554.708471608] [planner_server]: Configuring
+[INFO] [1793568554.708543159] [global_costmap.global_costmap]: Configuring
+[INFO] [1793568554.741954031] [global_costmap.global_costmap]: Using plugin "static_layer"
+[INFO] [1793568554.757928255] [global_costmap.global_costmap]: Subscribing to the map topic (/map) with transient local durability
+[INFO] [1793568554.768520152] [global_costmap.global_costmap]: Initialized plugin "static_layer"
+[INFO] [1793568554.768817469] [global_costmap.global_costmap]: Using plugin "obstacle_layer"
+[INFO] [1793568554.773364250] [global_costmap.global_costmap]: Subscribed to Topics: scan
+[INFO] [1793568554.782543707] [global_costmap.global_costmap]: Initialized plugin "obstacle_layer"
+[INFO] [1793568554.782598516] [global_costmap.global_costmap]: Using plugin "inflation_layer"
+[INFO] [1793568554.784707760] [global_costmap.global_costmap]: Initialized plugin "inflation_layer"
+[INFO] [1793568554.898283835] [global_costmap.global_costmap]: StaticLayer: Resizing costmap to 240 X 190 at 0.050000 m/pix
+[INFO] [1793568554.909347084] [planner_server]: Created global planner plugin GridBased of type nav2_smac_planner::SmacPlannerHybrid
+[INFO] [1793568554.909451578] [planner_server]: Configuring GridBased of type SmacPlannerHybrid
+[INFO] [1793568554.917387584] [planner_server]: Even sized heuristic lookup table size set 200.000000, increasing size by 1 to make odd
+[INFO] [1793568555.550761786] [planner_server]: Configured plugin GridBased of type SmacPlannerHybrid with maximum iterations 1000000, max on approach iterations 1000, and allowing unknown traversal. Tolerance 0.25.Using motion model: Dubin.
+[INFO] [1793568555.550842741] [planner_server]: Planner Server has GridBased  planners available.
+[INFO] [1793568558.065914731] [planner_server]: Activating
+[INFO] [1793568558.066000554] [global_costmap.global_costmap]: Activating
+[INFO] [1793568558.066015909] [global_costmap.global_costmap]: Checking transform
+[INFO] [1793568558.066142517] [global_costmap.global_costmap]: Timed out waiting for transform from base_link to map to become available, tf error: Lookup would require extrapolation into the past.  Requested time 1.631000 but the earliest data is at time 2.400000, when looking up transform from frame [base_link] to frame [map]
+[INFO] [1793568558.566175514] [global_costmap.global_costmap]: Timed out waiting for transform from base_link to map to become available, tf error: Lookup would require extrapolation into the past.  Requested time 1.991000 but the earliest data is at time 2.400000, when looking up transform from frame [base_link] to frame [map]
+[INFO] [1793568559.066334043] [global_costmap.global_costmap]: start
+[INFO] [1793568560.074775377] [planner_server]: Activating plugin GridBased of type SmacPlannerHybrid
+[INFO] [1793568560.102013928] [planner_server]: Creating bond (planner_server) to lifecycle manager.

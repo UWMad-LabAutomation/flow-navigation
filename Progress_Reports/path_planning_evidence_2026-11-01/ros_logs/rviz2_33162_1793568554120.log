@@ -1,0 +1,12 @@
+[INFO] [1793568556.206957671] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [1793568556.207185255] [rviz2]: OpenGl version: 4.6 (GLSL 4.6)
+[INFO] [1793568556.294736153] [rviz2]: Stereo is NOT SUPPORTED
+[INFO] [1793568556.915636091] [rviz2]: Trying to create a map of size 240 x 190 using 1 swatches
+[ERROR] [1793568556.927760022] [rviz2]: rviz/glsl120/indexed_8bit_image.vert
+rviz/glsl120/indexed_8bit_image.frag
+ GLSL link result : 
+active samplers with a different type refer to the same texture image unit
+[INFO] [1793568560.127270247] [rviz2]: Trying to create a map of size 240 x 190 using 1 swatches
+[INFO] [1793568564.549876518] [rviz2]: Trying to create a map of size 80 x 80 using 1 swatches
+[INFO] [1793568571.523430383] [rviz]: Message Filter dropping message: frame 'odom' at time 1.531 for reason 'the timestamp on the message is earlier than all the data in the transform cache'
+[INFO] [1793568633.713554574] [rclcpp]: signal_handler(SIGINT/SIGTERM)
