@@ -1,5 +1,9 @@
 # Robot Navigation Project Context
 
+Last reviewed: 2026-11-01. This file records the implemented simulation,
+available evidence, known limitations, and agreed next steps. Simulation
+results must not be presented as physical-robot validation.
+
 ## Change policy
 - Do not modify files unless the user explicitly asks for changes.
 - Default to explaining proposed changes first.
@@ -30,6 +34,8 @@
 - Vertical rail speed: up to 0.3 m/s
 - YAM arms
 - Jetson Thor is the deployment target
+- Physical inspection and measurements are pending. The documented full-robot envelope is not a measured base-only model. Current URDF base height (0.200 m), mass (80 kg), center of mass and box inertias are provisional.
+- The URDF is a simplified chassis/camera description. Gazebo wheel/contact geometry is separately defined in `src/robot_simulation/worlds/flow_base.sdf`; its MecanumDrive system approximates the real powered-caster base. A future geometry update must reconcile both files, not only the URDF.
 
 ## Navigation sensor target
 - One RealSense D435i depth camera, likely mounted overhead.
@@ -56,11 +62,12 @@
 
 ## Navigation Architecture
 - Use Nav2 as the navigation framework.
-- SLAM provides map data and map -> odom.
+- Current launches use a saved/generated occupancy map from map_server and AMCL for map -> odom. SLAM integration is upcoming; it does not currently replace AMCL in these launches.
 - robot_state_estimation uses robot_localization EKF to fuse wheel vx/vy/yaw rate and all camera gyro axes, transformed into the base frame. It publishes /odom and owns odom -> base_footprint; the URDF connects base_link. The raw Gazebo odometry TF is not bridged while fusion is enabled. AMCL still owns map -> odom.
 - D435i IMU has no absolute map position/yaw reference. Only gyro measurements are fused; camera orientation and acceleration are excluded to avoid gravity/elevator/arm-motion artifacts. Physical driver enable_gyro/enable_accel and unite_imu_method:=2 supply the combined IMU topic; camera extrinsics, covariances and wheel uncertainty need hardware calibration.
+- IMU fusion improves short-term odometry; it does not replace AMCL or remove its initial-pose requirement. Keep one publisher for each TF relationship. A future SLAM mode should own /map and map -> odom while EKF retains odom -> base_footprint.
 - Nav2 outputs geometry_msgs/Twist commands.
-- A ROS 2 bridge will convert /cmd_vel into I2RT FlowBaseClient commands.
+- A physical ROS 2 bridge is intended to convert /cmd_vel into I2RT FlowBaseClient commands. No robot_base_bridge source package or complete physical bringup launch is present in this checkout; do not claim it is delivered or validated here.
 - Navigation owns vx, vy, and yaw rate.
 - VLA/manipulation owns the rail and arms.
 - Keep navigation CPU-oriented where practical so GPU resources remain available for VLA and SLAM.
@@ -72,6 +79,8 @@
 - NavigateToPose keeps a valid global path and replans on blockage or a changed goal. Both default navigation behavior trees recover using costmap clearing, waiting and slow backup; Spin recovery is removed. Global inflation radius 1.50 m and Hybrid A* cost_penalty 2.0 favor clearance in 2.5 m corridors.
 - The forward camera has side/rear blind spots during holonomic travel. Camera-only sensing does not establish safe full-speed movement in unobserved directions. Recent long-maze runs showed AMCL drift; changing planners/controllers does not fix localization or slow simulation time.
 - `src/robot_navigation/scripts/validate_holonomic_navigation.py` tests three Hybrid A* paths and three actual navigation goals, optionally with `--dynamic-obstacle`. Evidence is in `Progress_Reports/holonomic_navigation_2026-10-28/`. Ground truth is used only for checking results, not as a navigation input. Controlled tests and a short maze goal passed; full-maze reliability remains open.
+- The 2026-11-01 visible Gazebo/RViz inserted-obstacle course passed all three planning queries and all three navigation goals. Peak total command speed was 0.63 m/s, peak lateral command 0.1059 m/s, and measured lateral travel 0.488 m. camera_to_scan was the only /scan publisher. See `Progress_Reports/holonomic_navigation_2026-11-01/validation_summary.json`.
+- Long-maze planning is an open issue: seed 3851856309 produced repeated "exceeded maximum iterations" failures with the current 1,000,000-iteration / 5 s settings. A goal approximately 12.5 m away geometrically requires about 198 m through corridor cell centers. The grid-only route check is not a proven drivable path. Test these cases before declaring Hybrid A* reliable on arbitrary mazes; a missing global path prevents MPPI path following.
 - RViz launch default is robot_navigation/config/flow_navigation.rviz: TopDownOrtho, near clip 0.01, target <Fixed Frame>, scale 18, angle -1.5725, X=0, Y=0.
 
 ## Packages
@@ -81,20 +90,64 @@
 - robot_state_estimation: common CPU wheel/IMU EKF configuration and standalone launch
 - robot_mppi_critics: forward travel preference inside the MPPI optimizer
 - robot_navigation: Nav2 config, BTs, planners/controllers
-- robot_base_bridge: I2RT base interface
-- robot_bringup: top-level launch files
+- robot_base_bridge: planned I2RT base interface; source absent in this checkout
+- robot_bringup: package scaffold; no implemented top-level hardware launch
+- third_party/pointcloud_to_laserscan: vendored camera-cloud-to-scan converter; upstream BSD license retained
 
-## Current roadmap
-1. Create simplified URDF of FLOW base. ##Done
-2. Make simulated base holonomic in Gazebo.  ##Done
-3. Connect Nav2 /cmd_vel to simulated base.  ##Done
-4. Build robot_base_bridge using I2RT FlowBaseClient.  ##Done
-5. Determine source of odom -> base_link.  ##Done
-6. Drive real base slowly with Nav2.  ##Done
-7. Integrate SLAM/nvblox map output.
-8. Integrate rail/YAM/VLA handoff.
+## Completed work and evidence
+
+| Work | Implemented result and verification |
+| --- | --- |
+| Simplified robot model and simulation | FLOW chassis/camera URDF, separate Gazebo holonomic base, command/state bridges, generated random mazes and matching occupancy maps. Geometry/inertias remain provisional. |
+| D435i simulation profile | Replaced old D405 references with the supplied D435i specifications, adjustable 2 m maximum-height mount and automatic downward pitch. Optional rendered-camera projection patch/build/check tooling is retained. |
+| CPU camera-to-scan integration | Physics rays sample current collision geometry, including inserted objects, and publish synthetic PointCloud2 through the existing scan converter. No LiDAR or rendered depth sensor runs in default camera mode. Geometry, clipping and occlusion checks are provided. |
+| Hybrid A* planning | SmacPlannerHybrid forward Dubins configuration and footprint-aware path checks. Four independent start/goal pairs passed in a custom Gazebo obstacle map; actual labeled RViz screenshots and an overview are in `Progress_Reports/path_planning_evidence_2026-11-01/`. These screenshots show planning, not execution from all four starts or SLAM map creation. |
+| Holonomic MPPI | Omni sampling, forward-travel preference critic, trajectory/acceleration tuning, total-speed limiter and spin-free recovery trees. Controlled navigation with an inserted obstacle passed with Gazebo and RViz visible. |
+| IMU and odometry | Simulated camera IMU, covariance preparation, wheel/gyro EKF, single odometry TF owner, bias/fusion checks and timestamp-matched truth comparisons. A 24.035 s simulation test measured EKF maximum errors of 9.03 mm and 0.116 degrees; these are not hardware calibration results. See `Progress_Reports/forward_navigation_2026-10-28/`. |
+| GUI and simulation performance | WSL D3D12 selection for visible interfaces, equivalent maze-wall box merging, and camera/scan timing checks. Same-seed short-window real-time factor improved from about 0.34 to 0.60. See `Progress_Reports/gui_rendering_2026-10-28/`. |
+| Documentation and evidence organization | Package READMEs, progress report, source validation scripts, path/IMU/navigation JSON and screenshots. Planning evidence was moved out of src into Progress_Reports at the user's request; use its current location in links. |
+
+Historical roadmap entries marked the physical bridge and real-base driving
+as done. Their implementation/evidence is not present here. Preserve that
+distinction instead of assuming hardware readiness from the old checklist.
+
+## Agreed future steps
+
+The next two model tasks must wait until the user measures and observes the
+actual robot. Do not replace provisional dimensions or inertias with guesses.
+
+| Task | Owner / listed effort | Prerequisite and deliverable |
+| --- | --- | --- |
+| Update robot URDF to match physical hardware | ZG / 3 | After physical measurement: update chassis dimensions, wheel geometry, sensor mounting positions and collision geometry. Reconcile the separate Gazebo SDF, frame conventions and mass/inertia assumptions. Deliver the updated URDF and an RViz visualization. |
+| Validate updated robot model and physics in Gazebo | ZG / 3 | After the measured model update: test forward/lateral motion, turning and obstacle clearance using updated geometry/inertias. Adjust Nav2 footprint, velocity/acceleration limits and motion parameters where measurements justify it. Deliver a short visible Gazebo demonstration. |
+| Integrate SLAM | Upcoming; can progress alongside measurements | Connect the selected SLAM/map pipeline to Nav2, establish /map and map -> odom ownership, and provide a launch mode that avoids simultaneous AMCL/SLAM TF publishers. An OccupancyGrid publisher alone does not provide localization. Validate mapping, map alignment and navigation/replanning with live obstacles. No SLAM provider is selected as completed here. |
+| Complete physical bringup and calibration | After required hardware information/integration is available | Wire RealSense point cloud and IMU, measured camera/elevator TF, wheel odometry and the FLOW CAN command bridge using real time. Calibrate covariances, footprint, speed limits and stop behavior before claiming sim-to-real validation. Existing simulation launch files always include Gazebo. |
+| Include rail and YAM arms | Later | Add measured arm/rail geometry, joints, collisions and changing sensor transforms; assess the occupied envelope and mass distribution across configurations. Establish navigation/manipulation control handoff. Navigation owns vx/vy/yaw; VLA/manipulation owns rail/arms. Validate the combined robot after integration. |
+
+Measurement/observation notes should include chassis and caster dimensions and
+positions, camera pose at lowered/raised elevator positions, actual wheel/base
+odometry frames and rates, movement directions, speed/acceleration, turning
+behavior, mass/COM information where available, and rail/arm clearances. Record
+unknowns explicitly. Powered-caster behavior must be compared with the current
+MecanumDrive approximation.
+
+Continue investigating long-maze search limits, AMCL/map alignment, scan/TF
+timing and visible simulation throughput. Preserve camera-only sensing and
+forward-preferred normal travel while testing fixes. Keep runtime evidence in
+Progress_Reports and distinguish measured outcomes from planned changes.
+
+## Launch and documentation conventions
+
+- The root `README.md` is the GitHub entry point for this repository. Keep its setup, commands, status and roadmap consistent with actual source and evidence.
+- Normal WSL simulation: `ros2 launch robot_navigation maze_navigation_launch.py sensor:=camera camera_backend:=cpu camera_fps:=10 use_imu:=true gui:=true use_rviz:=true` from a sourced workspace. Empty seed generates a new maze; an explicit seed reproduces it.
+- Stop the previous launch before starting another in the same ROS domain. GZ_PARTITION isolation does not isolate ROS topics. Use Ctrl+C on the owning launch; avoid broad kill commands that stop unrelated Python/Node/VS Code processes.
+- Set AMCL's initial pose at the known spawn before sending navigation goals. IMU/EKF does not initialize absolute map pose. Startup/reset TF warnings and a global-planner search failure are separate diagnoses.
+- Do not run the relocated one-off screenshot helper as the normal navigation launch. Some recorded absolute paths/session PIDs refer to the original capture session; the saved PNG/JSON files are the evidence.
 
 ## Current task
-The user has explicitly extended the camera work to Gazebo/Nav2 sensing integration.
-Current focus: forward-facing travel on clear paths, holonomic MPPI obstacle avoidance, measured IMU/EKF/map-localization accuracy against timestamp-matched Gazebo truth, and a 0.63 m/s total translation limit. The user's latest preference supersedes unrestricted normal strafing: face the route and walk forward, with sideways motion for avoidance/corrections.
-Hardware integration remains future work unless explicitly requested.
+Maintain the working CPU-camera, Hybrid A* and forward-preferred Omni MPPI
+simulation while documenting completed work and open limits. Await the user's
+physical robot measurements before the URDF/physics tasks above. Prepare for
+upcoming SLAM integration and eventual YAM-arm/rail integration without marking
+either as implemented. Documentation work does not authorize changing runtime
+configuration, inventing hardware values or publishing to GitHub.

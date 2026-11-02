@@ -285,3 +285,86 @@
 [rviz2-22] [INFO] [1793568571.523430383] [rviz]: Message Filter dropping message: frame 'odom' at time 1.531 for reason 'the timestamp on the message is earlier than all the data in the transform cache'
 [rviz2-22] [INFO] [1793568633.713554574] [rclcpp]: signal_handler(SIGINT/SIGTERM)
 [INFO] [rviz2-22]: process has finished cleanly [pid 33162]
+[INFO] [gazebo-1]: process has finished cleanly [pid 33050]
+Task exception was never retrieved
+future: <Task finished name='Task-3' coro=<ExecuteLocal.__execute_process() done, defined at /opt/ros/jazzy/lib/python3.12/site-packages/launch/actions/execute_local.py:544> exception=FileNotFoundError(2, 'No such file or directory')>
+Traceback (most recent call last):
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/launch/actions/execute_local.py", line 594, in __execute_process
+    self.__logger.info('process has finished cleanly [pid {}]'.format(pid))
+  File "/usr/lib/python3.12/logging/__init__.py", line 1539, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1684, in _log
+    self.handle(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1700, in handle
+    self.callHandlers(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1762, in callHandlers
+    hdlr.handle(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1028, in handle
+    self.emit(record)
+  File "/usr/lib/python3.12/logging/handlers.py", line 521, in emit
+    self.reopenIfNeeded()
+  File "/usr/lib/python3.12/logging/handlers.py", line 511, in reopenIfNeeded
+    self.stream = self._open()
+                  ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/logging/__init__.py", line 1263, in _open
+    return open_func(self.baseFilename, self.mode,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/zach/robot_ws/src/path_planning_evidence_2026-11-01/ros_logs/2026-11-01-15-29-13-498379-DESKTOP-86HU3II-33030/launch.log'
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+Exception in callback AsyncSafeSignalManager.__handle_signal()
+handle: <Handle AsyncSafeSignalManager.__handle_signal()>
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/launch/utilities/signal_management.py", line 212, in __handle_signal
+    self.__handlers[signum](signum)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/launch/launch_service.py", line 195, in _on_sigint
+    self.__logger.warning(base_msg)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1551, in warning
+    self._log(WARNING, msg, args, **kwargs)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1684, in _log
+    self.handle(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1700, in handle
+    self.callHandlers(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1762, in callHandlers
+    hdlr.handle(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1028, in handle
+    self.emit(record)
+  File "/usr/lib/python3.12/logging/handlers.py", line 522, in emit
+    logging.FileHandler.emit(self, record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1278, in emit
+    self.stream = self._open()
+                  ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/logging/__init__.py", line 1263, in _open
+    return open_func(self.baseFilename, self.mode,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/zach/robot_ws/src/path_planning_evidence_2026-11-01/ros_logs/2026-11-01-15-29-13-498379-DESKTOP-86HU3II-33030/launch.log'
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+Exception in callback AsyncSafeSignalManager.__handle_signal()
+handle: <Handle AsyncSafeSignalManager.__handle_signal()>
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/launch/utilities/signal_management.py", line 212, in __handle_signal
+    self.__handlers[signum](signum)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/launch/launch_service.py", line 195, in _on_sigint
+    self.__logger.warning(base_msg)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1551, in warning
+    self._log(WARNING, msg, args, **kwargs)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1684, in _log
+    self.handle(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1700, in handle
+    self.callHandlers(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1762, in callHandlers
+    hdlr.handle(record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1028, in handle
+    self.emit(record)
+  File "/usr/lib/python3.12/logging/handlers.py", line 522, in emit
+    logging.FileHandler.emit(self, record)
+  File "/usr/lib/python3.12/logging/__init__.py", line 1278, in emit
+    self.stream = self._open()
+                  ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/logging/__init__.py", line 1263, in _open
+    return open_func(self.baseFilename, self.mode,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/zach/robot_ws/src/path_planning_evidence_2026-11-01/ros_logs/2026-11-01-15-29-13-498379-DESKTOP-86HU3II-33030/launch.log'
