@@ -63,14 +63,18 @@ def pose(values):
 def collides(x, y, angle, padding=0.02):
     """Check the oriented FLOW footprint against the known test rectangles."""
     c, s = math.cos(angle), math.sin(angle)
-    hx, hy = 0.3755 + padding, 0.271 + padding
+    # Match the Nav2 rectangle enclosing the base, rail, and forward camera.
+    front, rear, half_width = 0.30, 0.27, 0.375
+    hx, hy = (front + rear) / 2 + padding, half_width + padding
+    center_offset = (front - rear) / 2
+    center_x, center_y = x + center_offset * c, y + center_offset * s
     axes = [(1, 0), (0, 1), (c, s), (-s, c)]
     for bx, by, width, height in BOXES:
         separated = False
         for ax, ay in axes:
             robot_r = hx * abs(ax * c + ay * s) + hy * abs(-ax * s + ay * c)
             box_r = width / 2 * abs(ax) + height / 2 * abs(ay)
-            if abs((x - bx) * ax + (y - by) * ay) > robot_r + box_r:
+            if abs((center_x - bx) * ax + (center_y - by) * ay) > robot_r + box_r:
                 separated = True
                 break
         if not separated:

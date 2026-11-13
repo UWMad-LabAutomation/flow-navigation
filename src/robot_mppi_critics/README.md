@@ -9,7 +9,10 @@ Outside a 15-degree forward cone, each predicted velocity contributes
 tracking corrections. The default weight is 60. It drops to 4 when both:
 
 - the robot faces the local route within 0.5 rad; and
-- a known lethal obstacle cell lies 0.3955-1.5 m ahead, within +/-0.321 m laterally.
+- a known lethal obstacle cell lies 0.32-1.5 m ahead, within +/-0.425 m laterally.
+
+The forward probe begins beyond the padded rail-mounted camera envelope. The
+lateral probe covers the 0.75 m rail width with an additional 0.05 m per side.
 
 Unknown cells do not trigger the reduced penalty. Checks use the existing local
 costmap (static map plus camera observations). MPPI footprint collision costs,

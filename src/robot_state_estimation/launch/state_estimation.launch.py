@@ -1,7 +1,7 @@
 # Copyright 2026 Zach Gaier
 # Licensed under the Apache License, Version 2.0.
 
-"""Fuse wheel velocities and a D435i gyro without launching Gazebo or a driver."""
+"""Fuse wheel velocities and a camera gyro without launching Gazebo or a driver."""
 
 import os
 

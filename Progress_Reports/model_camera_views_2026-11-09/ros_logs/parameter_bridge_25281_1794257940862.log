@@ -1,0 +1,5 @@
+[INFO] [1794257940.895478252] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/flow_base_world/clock (gz.msgs.Clock) -> /world/flow_base_world/clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[INFO] [1794257940.897016348] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/cmd_vel (gz.msgs.Twist) -> /model/flow_base/cmd_vel (geometry_msgs/msg/Twist)] (Lazy 0)
+[INFO] [1794257940.898800137] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/model/flow_base/cmd_vel (geometry_msgs/msg/Twist) -> /model/flow_base/cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[INFO] [1794257940.899609253] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/odometry (gz.msgs.Odometry) -> /model/flow_base/odometry (nav_msgs/msg/Odometry)] (Lazy 0)
+[INFO] [1794257971.369279314] [rclcpp]: signal_handler(SIGINT/SIGTERM)

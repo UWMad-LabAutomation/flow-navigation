@@ -1,0 +1,57 @@
+[INFO] [launch]: All log files can be found below /home/zach/robot_ws/Progress_Reports/model_camera_views_2026-11-09/ros_logs/2026-11-09-14-59-50-375218-DESKTOP-86HU3II-25821
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [launch.user]: FLOW sensor=camera; camera_backend=cpu; generated world=/tmp/flow_sensors_2ehbcxkn/flow_base.sdf
+[INFO] [gazebo-1]: process started with pid [25837]
+[INFO] [parameter_bridge-2]: process started with pid [25838]
+[INFO] [robot_state_publisher-3]: process started with pid [25839]
+[INFO] [parameter_bridge-4]: process started with pid [25841]
+[INFO] [inertial_measurements-5]: process started with pid [25842]
+[INFO] [ekf_node-6]: process started with pid [25843]
+[INFO] [parameter_bridge-7]: process started with pid [25844]
+[INFO] [pointcloud_to_laserscan_node-8]: process started with pid [25845]
+[ekf_node-6] [INFO] [1794257990.837023792] [ekf_filter_node]: Waiting for clock to start...
+[robot_state_publisher-3] [INFO] [1794257990.840675383] [robot_state_publisher]: Robot initialized
+[parameter_bridge-2] [INFO] [1794257990.865016561] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/flow_base_world/clock (gz.msgs.Clock) -> /world/flow_base_world/clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1794257990.866349630] [imu_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/camera/imu (gz.msgs.IMU) -> /model/flow_base/camera/imu (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1794257990.867934157] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/cmd_vel (gz.msgs.Twist) -> /model/flow_base/cmd_vel (geometry_msgs/msg/Twist)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1794257990.870771635] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/model/flow_base/cmd_vel (geometry_msgs/msg/Twist) -> /model/flow_base/cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-2] [INFO] [1794257990.872351122] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/odometry (gz.msgs.Odometry) -> /model/flow_base/odometry (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-7] [INFO] [1794257991.871776710] [depth_points_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/camera/depth/image_raw/points (gz.msgs.PointCloudPacked) -> /camera/depth/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[pointcloud_to_laserscan_node-8] [INFO] [1794257997.181742900] [camera_to_scan]: Got a subscriber to laserscan, starting pointcloud subscriber
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[pointcloud_to_laserscan_node-8] [INFO] [1794258010.074738850] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[ekf_node-6] [INFO] [1794258010.074813513] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [pointcloud_to_laserscan_node-8]: sending signal 'SIGINT' to process[pointcloud_to_laserscan_node-8]
+[INFO] [parameter_bridge-7]: sending signal 'SIGINT' to process[parameter_bridge-7]
+[INFO] [ekf_node-6]: sending signal 'SIGINT' to process[ekf_node-6]
+[INFO] [inertial_measurements-5]: sending signal 'SIGINT' to process[inertial_measurements-5]
+[INFO] [parameter_bridge-4]: sending signal 'SIGINT' to process[parameter_bridge-4]
+[INFO] [robot_state_publisher-3]: sending signal 'SIGINT' to process[robot_state_publisher-3]
+[INFO] [parameter_bridge-2]: sending signal 'SIGINT' to process[parameter_bridge-2]
+[INFO] [gazebo-1]: sending signal 'SIGINT' to process[gazebo-1]
+[parameter_bridge-2] [INFO] [1794258010.074833654] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-4] [INFO] [1794258010.074869039] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[robot_state_publisher-3] [INFO] [1794258010.075003268] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-7] [INFO] [1794258010.075818179] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[pointcloud_to_laserscan_node-8] [INFO] [1794258010.085191011] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-7] [INFO] [1794258010.086322009] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-4] [INFO] [1794258010.089107442] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[inertial_measurements-5] Traceback (most recent call last):
+[inertial_measurements-5]   File "/home/zach/robot_ws/install/robot_simulation/lib/robot_simulation/inertial_measurements", line 33, in <module>
+[inertial_measurements-5]     sys.exit(load_entry_point('robot-simulation', 'console_scripts', 'inertial_measurements')())
+[inertial_measurements-5]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[inertial_measurements-5]   File "/home/zach/robot_ws/build/robot_simulation/robot_simulation/inertial_measurements.py", line 65, in main
+[inertial_measurements-5]     node.destroy_node()
+[inertial_measurements-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/node.py", line 1968, in destroy_node
+[inertial_measurements-5]     self.__node.destroy_when_not_in_use()
+[inertial_measurements-5] KeyboardInterrupt
+[parameter_bridge-2] [INFO] [1794258010.096372197] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[ERROR] [robot_state_publisher-3]: process has died [pid 25839, exit code -2, cmd '/opt/ros/jazzy/lib/robot_state_publisher/robot_state_publisher --ros-args --params-file /tmp/launch_params_orjn8ltf'].
+[ERROR] [ekf_node-6]: process has died [pid 25843, exit code -2, cmd '/opt/ros/jazzy/lib/robot_localization/ekf_node --ros-args -r __node:=ekf_filter_node --params-file /home/zach/robot_ws/install/robot_state_estimation/share/robot_state_estimation/config/ekf.yaml --params-file /tmp/launch_params_8tux6skb -r odometry/filtered:=/odom'].
+[ERROR] [inertial_measurements-5]: process has died [pid 25842, exit code -2, cmd '/home/zach/robot_ws/install/robot_simulation/lib/robot_simulation/inertial_measurements --ros-args --params-file /tmp/launch_params_bt5u0q49'].
+[INFO] [parameter_bridge-7]: process has finished cleanly [pid 25844]
+[INFO] [parameter_bridge-4]: process has finished cleanly [pid 25841]
+[INFO] [parameter_bridge-2]: process has finished cleanly [pid 25838]
+[INFO] [pointcloud_to_laserscan_node-8]: process has finished cleanly [pid 25845]
+[ERROR] [gazebo-1]: process has died [pid 25837, exit code -2, cmd 'ruby /opt/ros/jazzy/opt/gz_tools_vendor/bin/gz sim -r /tmp/flow_sensors_2ehbcxkn/flow_base.sdf --force-version 8'].
+[INFO] [launch]: process[gazebo-1] was required: shutting down launched system

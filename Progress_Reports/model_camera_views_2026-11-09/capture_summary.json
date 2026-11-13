@@ -1,0 +1,68 @@
+{
+  "robot_closeup": {
+    "capture": {
+      "title": "/home/zach/robot_ws/Progress_Reports/model_camera_views_2026-11-09/robot_closeup.rviz - RViz",
+      "path": "/home/zach/robot_ws/Progress_Reports/model_camera_views_2026-11-09/rviz_0xa001f7.png",
+      "size": [
+        1550,
+        1000
+      ],
+      "extrema": [
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          255
+        ]
+      ]
+    },
+    "file": "robot_closeup.png"
+  },
+  "backend": "cpu",
+  "display_only_overlay": true,
+  "ros_domain_id": 193,
+  "gz_partition": "flow_capture_2c89db22bf0d44c599b2e7bfa19b6b05",
+  "scan": {
+    "frame": "camera_scan_frame",
+    "range_min": 0.25,
+    "range_max": 6.0,
+    "angle_min": -0.7853981852531433,
+    "angle_max": 0.7854081392288208
+  },
+  "cpu_scan_range": {
+    "capture": {
+      "title": "/home/zach/robot_ws/Progress_Reports/model_camera_views_2026-11-09/cpu_scan_range.rviz* - RViz",
+      "path": "/home/zach/robot_ws/Progress_Reports/model_camera_views_2026-11-09/rviz_0xa001f7.png",
+      "size": [
+        1550,
+        1000
+      ],
+      "extrema": [
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          255
+        ]
+      ]
+    },
+    "file": "cpu_scan_range.png"
+  },
+  "scan_publishers": [
+    "camera_to_scan"
+  ],
+  "overlay_topic": "/screenshot/scan_range",
+  "passed": true
+}

@@ -80,21 +80,23 @@
       <link name="base_link">
         <pose>0 0 0.100 0 0 0</pose>
         <inertial>
-          <!-- 72 kg chassis plus four 2 kg wheels gives the documented 80 kg. -->
+          <!-- Retain the provisional 72 kg chassis plus four 2 kg wheels.
+               Box inertias follow the updated chassis dimensions; the actual
+               mass distribution, including rail/support/arms, is unmeasured. -->
           <mass>72.0</mass>
           <inertia>
-            <ixx>2.002584</ixx>
+            <ixx>1.989600</ixx>
             <ixy>0</ixy>
             <ixz>0</ixz>
-            <iyy>3.624006</iyy>
+            <iyy>1.989600</iyy>
             <iyz>0</iyz>
-            <izz>5.146590</izz>
+            <izz>3.499200</izz>
           </inertia>
         </inertial>
         <visual name="visual">
           <geometry>
             <box>
-              <size>0.751 0.542 0.200</size>
+              <size>0.540 0.540 0.200</size>
             </box>
           </geometry>
           <material>
@@ -106,7 +108,7 @@
         <collision name="collision">
           <geometry>
             <box>
-              <size>0.751 0.542 0.200</size>
+              <size>0.540 0.540 0.200</size>
             </box>
           </geometry>
         </collision>
@@ -161,9 +163,12 @@
         Each wheel uses anisotropic friction to approximate mecanum rollers.
         The -90 degree link rotation aligns the visual cylinder with the
         base Y axis, and each joint explicitly uses that same rolling axis.
+        Centers at +/-0.19 m keep the 0.08 m collision spheres inside the
+        0.54 m base envelope. This layout is a provisional simulation
+        approximation, not a measured powered-caster layout.
       -->
       <link name="front_left_wheel">
-        <pose>0.2955 0.2910 0 -1.5708 0 0</pose>
+        <pose>0.190 0.190 0 -1.5708 0 0</pose>
         <inertial>
           <mass>2.0</mass>
           <inertia>
@@ -204,7 +209,7 @@
       </link>
 
       <link name="front_right_wheel">
-        <pose>0.2955 -0.2910 0 -1.5708 0 0</pose>
+        <pose>0.190 -0.190 0 -1.5708 0 0</pose>
         <inertial>
           <mass>2.0</mass>
           <inertia>
@@ -245,7 +250,7 @@
       </link>
 
       <link name="rear_left_wheel">
-        <pose>-0.2955 0.2910 0 -1.5708 0 0</pose>
+        <pose>-0.190 0.190 0 -1.5708 0 0</pose>
         <inertial>
           <mass>2.0</mass>
           <inertia>
@@ -286,7 +291,7 @@
       </link>
 
       <link name="rear_right_wheel">
-        <pose>-0.2955 -0.2910 0 -1.5708 0 0</pose>
+        <pose>-0.190 -0.190 0 -1.5708 0 0</pose>
         <inertial>
           <mass>2.0</mass>
           <inertia>
@@ -353,8 +358,8 @@
         <front_right_joint>front_right_wheel_joint</front_right_joint>
         <back_left_joint>rear_left_wheel_joint</back_left_joint>
         <back_right_joint>rear_right_wheel_joint</back_right_joint>
-        <wheel_separation>0.582</wheel_separation>
-        <wheelbase>0.591</wheelbase>
+        <wheel_separation>0.380</wheel_separation>
+        <wheelbase>0.380</wheelbase>
         <wheel_radius>0.080</wheel_radius>
         <min_acceleration>-1.0</min_acceleration>
         <max_acceleration>1.0</max_acceleration>

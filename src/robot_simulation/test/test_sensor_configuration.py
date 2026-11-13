@@ -36,17 +36,17 @@ def test_camera_replaces_lidar_and_preserves_maze(tmp_path):
     assert [sensor.get('type') for sensor in sensors] == ['depth_camera']
     assert sensors[0].findtext('camera/optical_frame_id') == 'camera_depth_optical_frame'
     assert sensors[0].findtext('camera/image/width') == '1280'
-    assert sensors[0].findtext('camera/image/height') == '720'
+    assert sensors[0].findtext('camera/image/height') == '800'
     assert float(sensors[0].findtext('update_rate')) == 30.0
-    assert float(sensors[0].findtext('camera/clip/near')) == 0.3
-    assert float(sensors[0].findtext('camera/clip/far')) == 3.0
+    assert float(sensors[0].findtext('camera/clip/near')) == 0.25
+    assert float(sensors[0].findtext('camera/clip/far')) == 6.0
     intrinsics = sensors[0].find('camera/lens/intrinsics')
     fx = float(intrinsics.findtext('fx'))
     fy = float(intrinsics.findtext('fy'))
-    assert math.degrees(2 * math.atan(640 / fx)) == pytest.approx(87)
-    assert math.degrees(2 * math.atan(360 / fy)) == pytest.approx(58)
-    size = model.findtext("link/visual[@name='d435i_body']/geometry/box/size")
-    assert [float(value) for value in size.split()] == [0.025, 0.09, 0.025]
+    assert math.degrees(2 * math.atan(640 / fx)) == pytest.approx(90)
+    assert math.degrees(2 * math.atan(400 / fy)) == pytest.approx(65)
+    size = model.findtext("link/visual[@name='gemini_335l_body']/geometry/box/size")
+    assert [float(value) for value in size.split()] == [0.027, 0.124, 0.029]
     for xpath in ('world/physics', "world/model[@name='maze_walls']",
                   "world/model[@name='flow_base']/pose",
                   "world/model[@name='flow_base']/plugin"):
@@ -78,7 +78,7 @@ def test_camera_pose_and_fov_follow_arguments():
 
 
 @pytest.mark.parametrize('height,hfov,vfov,width,pixels_high', [
-    (2.0, 87, 58, 1280, 720), (1.5, 87, 58, 640, 360), (2.0, 90, 60, 320, 240),
+    (1.25, 90, 65, 1280, 800), (1.5, 90, 65, 640, 400), (2.0, 90, 60, 320, 240),
 ])
 def test_auto_pitch_sees_ground_one_metre_past_front(height, hfov, vfov, width, pixels_high):
     """The lowest center-column ray must reach the requested ground point."""
@@ -89,8 +89,8 @@ def test_auto_pitch_sees_ground_one_metre_past_front(height, hfov, vfov, width, 
     mount = robot.find("joint[@name='base_link_to_camera_link']/origin")
     pitch = float(mount.get('rpy').split()[1])
     half_vfov = math.radians(vfov) / 2
-    ground_x = height / math.tan(pitch + half_vfov)
-    assert ground_x - 0.751 / 2 == pytest.approx(1.0)
+    ground_x = float(mount.get('xyz').split()[0]) + height / math.tan(pitch + half_vfov)
+    assert ground_x - 0.54 / 2 == pytest.approx(1.0)
     scan = robot.find("joint[@name='base_link_to_camera_scan_frame']/origin")
     assert [float(value) for value in scan.get('rpy').split()] == [0, 0, 0]
     assert float(scan.get('xyz').split()[2]) == pytest.approx(0.22)
@@ -152,11 +152,11 @@ def test_cpu_camera_preserves_world_and_removes_rendered_sensors(tmp_path):
     assert plugin.findtext('width') == '80'
     assert plugin.findtext('height') == '45'
     assert plugin.findtext('update_rate') == '20'
-    assert [float(v) for v in plugin.findtext('pose').split()] == [0, 0, 1.42, 0, 0.3, 0]
-    assert math.degrees(float(plugin.findtext('hfov'))) == pytest.approx(87)
-    assert math.degrees(float(plugin.findtext('vfov'))) == pytest.approx(58)
-    assert float(plugin.findtext('near')) == 0.3
-    assert float(plugin.findtext('far')) == 3.0
+    assert [float(v) for v in plugin.findtext('pose').split()] == [0.275, 0, 1.42, 0, 0.3, 0]
+    assert math.degrees(float(plugin.findtext('hfov'))) == pytest.approx(90)
+    assert math.degrees(float(plugin.findtext('vfov'))) == pytest.approx(65)
+    assert float(plugin.findtext('near')) == 0.25
+    assert float(plugin.findtext('far')) == 6.0
     for xpath in ('world/physics', "world/model[@name='maze_walls']",
                   "world/model[@name='flow_base']/pose",
                   "world/model/plugin[@name='gz::sim::systems::MecanumDrive']"):

@@ -1,0 +1,29 @@
+1794257940.4673839 [INFO] [launch]: All log files can be found below /home/zach/robot_ws/Progress_Reports/model_camera_views_2026-11-09/ros_logs/2026-11-09-14-59-00-465516-DESKTOP-86HU3II-25264
+1794257940.4675956 [INFO] [launch]: Default logging verbosity is set to INFO
+1794257940.5526636 [INFO] [launch.user]: FLOW sensor=camera; camera_backend=cpu; generated world=/tmp/flow_sensors_on7650tv/flow_base.sdf
+1794257940.8073707 [INFO] [gazebo-1]: process started with pid [25280]
+1794257940.8075643 [INFO] [parameter_bridge-2]: process started with pid [25281]
+1794257940.8076956 [INFO] [robot_state_publisher-3]: process started with pid [25282]
+1794257940.8077760 [INFO] [parameter_bridge-4]: process started with pid [25284]
+1794257940.8078461 [INFO] [inertial_measurements-5]: process started with pid [25285]
+1794257940.8079610 [INFO] [ekf_node-6]: process started with pid [25286]
+1794257940.8080461 [INFO] [parameter_bridge-7]: process started with pid [25287]
+1794257940.8081136 [INFO] [pointcloud_to_laserscan_node-8]: process started with pid [25288]
+1794257971.3715239 [WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+1794257971.3816967 [INFO] [pointcloud_to_laserscan_node-8]: sending signal 'SIGINT' to process[pointcloud_to_laserscan_node-8]
+1794257971.3831096 [INFO] [parameter_bridge-7]: sending signal 'SIGINT' to process[parameter_bridge-7]
+1794257971.3841674 [INFO] [ekf_node-6]: sending signal 'SIGINT' to process[ekf_node-6]
+1794257971.3854625 [INFO] [inertial_measurements-5]: sending signal 'SIGINT' to process[inertial_measurements-5]
+1794257971.3869436 [INFO] [parameter_bridge-4]: sending signal 'SIGINT' to process[parameter_bridge-4]
+1794257971.3881001 [INFO] [robot_state_publisher-3]: sending signal 'SIGINT' to process[robot_state_publisher-3]
+1794257971.3891177 [INFO] [parameter_bridge-2]: sending signal 'SIGINT' to process[parameter_bridge-2]
+1794257971.3904209 [INFO] [gazebo-1]: sending signal 'SIGINT' to process[gazebo-1]
+1794257971.3908010 [ERROR] [ekf_node-6]: process has died [pid 25286, exit code -2, cmd '/opt/ros/jazzy/lib/robot_localization/ekf_node --ros-args -r __node:=ekf_filter_node --params-file /home/zach/robot_ws/install/robot_state_estimation/share/robot_state_estimation/config/ekf.yaml --params-file /tmp/launch_params_xn06hct1 -r odometry/filtered:=/odom'].
+1794257971.4866614 [INFO] [parameter_bridge-4]: process has finished cleanly [pid 25284]
+1794257971.4875607 [ERROR] [inertial_measurements-5]: process has died [pid 25285, exit code -2, cmd '/home/zach/robot_ws/install/robot_simulation/lib/robot_simulation/inertial_measurements --ros-args --params-file /tmp/launch_params_cm94p_zh'].
+1794257971.4929717 [INFO] [parameter_bridge-2]: process has finished cleanly [pid 25281]
+1794257971.4949231 [INFO] [parameter_bridge-7]: process has finished cleanly [pid 25287]
+1794257971.5004880 [INFO] [robot_state_publisher-3]: process has finished cleanly [pid 25282]
+1794257971.5010288 [INFO] [pointcloud_to_laserscan_node-8]: process has finished cleanly [pid 25288]
+1794257971.8063865 [ERROR] [gazebo-1]: process has died [pid 25280, exit code -2, cmd 'ruby /opt/ros/jazzy/opt/gz_tools_vendor/bin/gz sim -r /tmp/flow_sensors_on7650tv/flow_base.sdf --force-version 8'].
+1794257971.8067060 [INFO] [launch]: process[gazebo-1] was required: shutting down launched system

@@ -170,7 +170,7 @@ def _launch_simulation(context):
                 and marker.read_text().startswith('gz-rendering8_8.2.3\npatch_sha256=')
                 and (renderer_lib / 'libgz-rendering-ogre2.so').is_file()):
             raise RuntimeError(
-                'Build the local D435i projection fix before camera launch: '
+                'Build the local camera projection fix before camera launch: '
                 'python3 src/robot_simulation/scripts/build_camera_renderer.py')
         # Scope the corrected Ogre2 plugin to this launch; leave system Gazebo intact.
         plugin_paths = [str(renderer_lib)]
@@ -218,9 +218,10 @@ def _launch_simulation(context):
                 'transform_tolerance': 0.1,
                 'queue_size': 1,
                 # Heights relative to the level scan frame at Z=0.22 m:
-                # keep obstacles 0.10 to 1.00 m above ground, reject the floor.
+                # Keep obstacles 0.10 to 1.35 m above ground, including the
+                # rail's 1.275 m top and camera; reject the floor.
                 'min_height': -0.12,
-                'max_height': 0.78,
+                'max_height': 1.13,
                 'angle_min': -half_fov,
                 # Small padding keeps a point exactly on the last bin edge
                 # inside the converter's allocated ranges array.

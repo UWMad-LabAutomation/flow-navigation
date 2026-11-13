@@ -19,8 +19,8 @@ not sensed. Detection accuracy also depends on collision-mesh fidelity.
 
 The default grid is **80 x 45 rays at 30 Hz of simulation time**, adjustable
 with `camera_ray_width`, `camera_ray_height`, and `camera_fps`. Ray density is
-independent of the physical/rendered image profile, which remains 1280 x 720.
-Independent pinhole focal lengths reproduce the requested 87 x 58 degree
+independent of the Gemini 335L physical/rendered profile, 1280 x 800.
+Independent pinhole focal lengths approximate the requested 90 x 65 degree
 viewing volume; samples pass through coarse pixel centers. Sparse rays can
 miss objects smaller than their spacing. Performance depends on scene size
 and CPU capacity; the requested simulation rate is not a wall-clock guarantee.
@@ -36,8 +36,9 @@ provide appropriately sized floor collision geometry.
 The generated plugin pose shares the URDF mount, including its height and
 pitch, with compensation for the Gazebo model's wheel-center origin. Rays
 start at the optical origin and stop at the far *depth plane*. The first hit
-is retained only if its camera-X depth lies in 0.3-3.0 m. Too-near objects
-still occlude farther objects. Missing/out-of-range returns are XYZ NaNs and
+is retained only if its camera-X depth lies in 0.25-6.0 m. These clips use the
+Gemini 335L ideal range as a simulation policy, not its full hardware range.
+Too-near objects still occlude farther objects. Missing/out-of-range returns are XYZ NaNs and
 the organized cloud has `is_dense=false`. There is no artificial free-space
 return and no direct `/scan` publisher in this plugin.
 
@@ -47,9 +48,11 @@ is disabled between camera updates and while physics is paused. The existing
 `camera_to_scan` converter handles TF, floor rejection, and planar projection.
 
 This is an ideal geometric approximation. It does not reproduce active-stereo
-matching, illumination, material effects, USB latency, noise, or RealSense
-depth holes. Hardware still uses the RealSense driver and its calibrated
-frames, followed by `PointCloud2 -> camera_to_scan -> /scan -> Nav2`.
+matching, illumination, material effects, USB latency, noise, or depth holes.
+The planned hardware path uses the Orbbec driver and its calibrated frames,
+followed by `PointCloud2 -> camera_to_scan -> /scan -> Nav2`; physical bringup
+is not implemented here. See the [Gemini 335L specifications](https://store.orbbec.com/products/gemini-335l)
+and [robot geometry](../robot_description/README.md) for the rail mount.
 
 Validation:
 

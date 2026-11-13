@@ -2,7 +2,7 @@
 # Copyright 2026 Zach Gaier
 # Licensed under the Apache License, Version 2.0.
 
-"""Check rendered D435i depth and cloud geometry against a wall 2 m away."""
+"""Check rendered Gemini 335L depth and cloud geometry against a wall 2 m away."""
 
 import math
 import os
@@ -36,7 +36,8 @@ def main():
     world = configure_sensor_world(
         simulation / 'worlds/flow_base.sdf',
         xacro.process_file(str(description / 'urdf/flow_base.urdf.xacro'),
-                           mappings={'camera_pitch': '0'}).toxml(), 'camera',
+                           mappings={'camera_x': '0', 'camera_z': '2',
+                                     'camera_pitch': '0'}).toxml(), 'camera',
         camera_backend='render')
     tree = ET.parse(world)
     model = ET.SubElement(tree.find('world'), 'model', name='projection_test_wall')
@@ -74,19 +75,19 @@ def main():
             if not ready.wait(timeout=50):
                 raise RuntimeError(f'Missing camera messages; inspect {output / "gazebo.log"}')
             info, image, cloud = [received[key] for key in ('info', 'image', 'cloud')]
-            assert (info.width, info.height) == (1280, 720)
-            assert (image.width, image.height) == (1280, 720)
-            assert (cloud.width, cloud.height) == (1280, 720)
+            assert (info.width, info.height) == (1280, 800)
+            assert (image.width, image.height) == (1280, 800)
+            assert (cloud.width, cloud.height) == (1280, 800)
             k = info.intrinsics.k
             hfov = math.degrees(2 * math.atan(info.width / (2 * k[0])))
             vfov = math.degrees(2 * math.atan(info.height / (2 * k[4])))
-            assert abs(hfov - 87) < 1e-6 and abs(vfov - 58) < 1e-6
+            assert abs(hfov - 90) < 1e-6 and abs(vfov - 65) < 1e-6
             # The rectified projection must agree with the configured lens.
             assert abs(info.projection.p[0] - k[0]) < 1e-3, (info.projection.p[0], k[0])
             assert abs(info.projection.p[5] - k[4]) < 1e-3, (info.projection.p[5], k[4])
             assert not cloud.is_bigendian
             fields = {field.name: field.offset for field in cloud.field}
-            for row, col in [(360, 640), (360, 0), (360, 1279), (0, 640), (719, 640)]:
+            for row, col in [(400, 640), (400, 0), (400, 1279), (0, 640), (799, 640)]:
                 base = row * cloud.row_step + col * cloud.point_step
                 xyz = [struct.unpack_from('<f', cloud.data, base + fields[axis])[0]
                        for axis in ('x', 'y', 'z')]

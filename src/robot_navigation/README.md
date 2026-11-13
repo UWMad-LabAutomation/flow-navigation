@@ -9,8 +9,18 @@ camera pose, FOV, clipping, and ray-sampling arguments to Gazebo. CPU mode
 publishes a synthetic point cloud from physics ray casting and `/scan` projected
 from height-filtered camera points. No lidar or rendered camera sensor runs.
 Use `camera_backend:=render` for the optional depth-image/CameraInfo renderer.
-The physical-camera pipeline is unchanged. See
+The planned physical pipeline uses the Gemini 335L's Orbbec driver; hardware
+bringup is not supplied by these simulation launches. See
 [the simulation README](../robot_simulation/README.md) for sensing limitations.
+
+The 0.54 m square base has a 0.75 m rail along Y, centered at
+`(0.20, 0, 1.25)` m, with +X forward. Costmap footprints conservatively enclose
+that rail and the forward camera: X=-0.27 to +0.30 m, Y=+/-0.375 m, plus
+0.02 m padding. Camera points from
+0.10 to 1.35 m above ground enter `/scan`, including rail-height obstacles.
+This is a planar enclosure of the fixed model; moving arms and upper obstacles
+beyond the height filter are not covered by it. See
+[robot_description](../robot_description/README.md) for provisional dimensions.
 
 The controller uses 1000 candidate trajectories over 48 steps of 0.05 s
 (a 2.4 s horizon), with full footprint collision checks. Both static-map
@@ -57,7 +67,8 @@ AMCL skips scan beams inconsistent with the saved map and uses low motion-noise
 coefficients for Gazebo's accurate odometry (alpha1/3=0.002, alpha2/4/5=0.0005).
 These values require measurement and recalibration on hardware.
 AMCL still uses camera-derived `/scan` and simulation odometry; simulator ground
-truth is not fed to navigation. The AMCL adjustment passed a controlled test
+truth is not fed to navigation. Before the November 9, 2026 geometry and Gemini
+335L update, the AMCL adjustment passed a controlled test
 with an obstacle inserted after planning. Earlier long-maze runs showed large
 pose drift; full-maze reliability remains unverified. RViz cloud/TF timing and
 a simulator running below real time are separate issues. A single forward-facing camera
@@ -82,7 +93,7 @@ source install/setup.bash
 
 The default CPU camera needs only the normal colcon build. The optional
 `camera_backend:=render` requires a separate renderer build to correct
-Harmonic's custom-intrinsics projection for the 87 x 58 degree D435i view; see
+Harmonic's custom-intrinsics projection for the 90 x 65 degree Gemini 335L view; see
 [the simulation README](../robot_simulation/README.md#local-projection-correction).
 
 Start navigation with an imported map. The YAML file must reference its image
@@ -124,7 +135,7 @@ publish `/odom` and `odom -> base_footprint`. AMCL still publishes `map -> odom`
 `use_imu:=false` restores raw wheel odometry for comparison. The tilted IMU is
 transformed into the base frame; gyro, wheel X/Y and wheel yaw rate are fused,
 while IMU orientation/acceleration are excluded. See
-[state estimation](../robot_state_estimation/README.md) for physical D435i setup.
+[state estimation](../robot_state_estimation/README.md) for planned Orbbec IMU wiring.
 
 To generate a fresh maze with matching Gazebo walls and a map for Nav2:
 
@@ -173,12 +184,16 @@ only to assess results. Outputs include `results.json`, `launch.log`, and
 does not establish full-maze reliability or safe travel through unseen obstacles.
 
 Add `--dynamic-obstacle` to insert an obstacle after the initial planning
-queries and first goal. The saved map is not changed. The final configuration
+queries and first goal. The saved map is not changed. The October 28 configuration
 passed all three goals in this test, with 0.048-0.291 m actual endpoint errors
 and up to 0.413 m/s lateral commands. See the plots and JSON summaries in
 `Progress_Reports/holonomic_navigation_2026-10-28/`. A short maze goal also
 passed. The controller remains CPU-based; these results do not establish a
 full-speed guarantee in clutter or full-maze/hardware reliability.
+
+All October/November 1 results linked here used the previous geometry and
+D435i profile. They remain historical evidence and do not validate navigation
+with the revised base, rail, footprint and Gemini 335L camera mount.
 
 
 Verify clear-path startup, turning and forward motion with:
@@ -195,7 +210,7 @@ that the preference still permits obstacle avoidance. Both modes compare EKF
 odometry and AMCL map poses against timestamp-interpolated Gazebo truth.
 
 
-The final clear-start test passed two goals with 98.8-99.9% body-forward travel.
+The recorded October 28 clear-start test passed two goals with 98.8-99.9% body-forward travel.
 The actual maze seed 1400869175 corner-start regression passed with 99.6%
 body-forward travel and the first 0.5 m entirely within the forward camera
 window. The inserted-obstacle course passed three goals while retaining lateral

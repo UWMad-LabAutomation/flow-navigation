@@ -2,12 +2,14 @@
 
 ROS 2 Jazzy navigation for the I2RT LinearBot FLOW holonomic base, developed in
 Gazebo Harmonic with RViz. The current simulation combines **Smac Hybrid A***
-global planning, **MPPI Omni** local control, a CPU approximation of a RealSense
-D435i depth camera, and wheel/IMU state estimation.
+global planning, **MPPI Omni** local control, a CPU approximation of an Orbbec
+Gemini 335L depth camera, and wheel/IMU state estimation.
 
-**Current status:** controlled planning and obstacle-avoidance demonstrations
-have passed. Physical geometry calibration, complete hardware bringup, SLAM
-integration and YAM-arm integration remain future work. Long-maze planning and
+**Current status:** the model now uses the supplied 0.54 m square base and
+0.75 m arm rail along Y at 1.25 m height, with +X forward. Earlier controlled planning and obstacle-avoidance
+demonstrations passed with the previous model and camera profile. Physical
+geometry calibration, complete hardware bringup, SLAM integration and YAM-arm
+integration remain future work. Long-maze planning and
 full real-time simulation are not established.
 
 ## Run the simulation
@@ -95,7 +97,7 @@ Smac Hybrid A* -> global path -> MPPI Omni -> velocity smoother
 ```
 
 The EKF estimates short-term movement. AMCL locates that estimate in the map.
-The D435i gyro has no absolute map position or yaw reference, so it does not
+The Gemini 335L gyro has no absolute map position or yaw reference, so it does not
 replace AMCL. Only gyro measurements are fused from the IMU; orientation and
 linear acceleration are excluded. Each TF relationship has one owner.
 
@@ -120,20 +122,39 @@ uses:
   the route on clear paths while permitting lateral avoidance/corrections.
   Recovery trees use clearing, waiting and slow backup without Spin recovery.
 
-### D435i camera approximation
+### Robot geometry and Gemini 335L camera
 
-The intended sensor is one forward-facing overhead D435i. Camera mode uses
-only camera-derived `/scan`; no LiDAR runs in the default configuration.
+The base is 0.54 x 0.54 m in X/Y. A fixed 0.10 x 0.75 x 0.05 m rail runs
+along Y, centered at `(0.20, 0, 1.25)` m. Its front face is 2 cm behind the
+base front. A user-selected 0.20 x 0.15 x 0.945 m upright at
+`(0.15, 0, 0.7525)` m connects the base to the rail with their front faces flush.
+The existing 0.20 m base height, 0.08 m clearance, 80 kg mass and simplified
+wheel dynamics remain provisional. The upright dimensions are a modeling choice;
+upper-structure masses and
+YAM arms are not modeled. The URDF and Gazebo share chassis, upright and rail
+collision geometry. Gazebo keeps the camera enclosure visual-only to avoid
+rays hitting their own housing. Nav2 conservatively encloses the base, rail and camera with
+X=-0.27 to +0.30 m and Y=+/-0.375 m, plus 0.02 m footprint padding.
+
+The intended sensor is one forward-facing rail-mounted Gemini 335L. Camera
+mode uses only camera-derived `/scan`; no LiDAR runs in the default configuration.
 
 | Setting | Default |
 | --- | --- |
-| Depth field of view | 87 degrees horizontal / 58 degrees vertical |
-| Optical depth limits | 0.3-3.0 m |
-| Mount reference | `(0, 0, 2.0)` m, centered on X; 2 m represents the fully raised elevator |
-| Pitch | Automatic downward pitch, about 26.48 degrees at 2 m, targeting ground 1 m beyond the front edge |
+| Depth field of view | 90 degrees horizontal / 65 degrees vertical |
+| Optical depth limits | 0.25-6.0 m, using the manufacturer's ideal range as simulation clipping policy |
+| Mount reference | Provisional `(0.275, 0, 1.25)` m, 2.5 cm ahead of the rail's front face to keep its view clear |
+| Pitch | Automatic downward pitch, about 18.98 degrees, targeting ground 1 m beyond the base's front edge |
 | CPU sampling | 80 x 45 rays; independent of depth image resolution |
 | Requested camera rate | 30 Hz simulation time by default; the interactive command above requests 10 Hz |
-| Physical/rendered image profile | 1280 x 720 at a requested 30 FPS |
+| Physical/rendered image profile | 1280 x 800 at a requested 30 FPS |
+
+The simplified camera housing is 0.027 x 0.124 x 0.029 m in camera X/Y/Z.
+Its nominal centered optical reference is an approximation; the physical left
+IR optical center and bracket transform require calibration. Orbbec lists a
+wider 0.17-20 m+ working range, with profile-dependent minimum depth; the
+chosen clip does not claim that full range. See the [Gemini 335L specifications](https://store.orbbec.com/products/gemini-335l)
+and [datasheet](https://www.orbbec.com/wp-content/uploads/2025/06/Gemini-330-series-Datasheet-V1.6.pdf).
 
 CPU rays query current collision geometry, including inserted/moving objects,
 and publish synthetic PointCloud2. CPU mode creates no rendered depth sensor,
@@ -142,20 +163,29 @@ sparse rays and ideal surfaces do not reproduce all stereo noise, holes,
 lighting effects or thin-object detections.
 
 The converter transforms points into a level scan frame at Z=0.22 m and keeps
-points 0.10-1.00 m above the ground. Missing returns remain unknown. One forward
-camera leaves side/rear blind spots during holonomic motion.
+points 0.10-1.35 m above the ground to include rail-height obstacles. Missing
+returns remain unknown. One forward camera leaves side/rear blind spots during
+holonomic motion.
 
 `camera_z`, camera pose/FOV/range and ray density are adjustable. The simulation
-holds the selected elevator height with a fixed joint; elevator motion and
-actuated camera tilt are not modeled. The optional `camera_backend:=render`
+holds the rail and camera with fixed joints; elevator motion and
+actuated camera tilt are not modeled. Pose overrides do not resize the fixed
+Nav2 footprint; update that footprint if a new camera pose extends beyond
+the default envelope. The optional `camera_backend:=render`
 uses the separate [local projection correction](src/robot_simulation/README.md#local-projection-correction).
-It is unnecessary for CPU sensing or physical RealSense data. `sensor:=lidar`
+It is unnecessary for CPU sensing or physical Orbbec data. `sensor:=lidar`
 is retained only as a legacy simulation option.
 
 ## Completed demonstrations
 
-The figures below are recorded simulation evidence, not claims about hardware
-or the current live session.
+The [latest rail-update report](Progress_Reports/rail_update_2026-11-09/README.md)
+records the corrected rail orientation, upright and camera placement. The
+[first November 9 model-update report](Progress_Reports/model_update_2026-11-09/README.md)
+contains checks of the earlier rail geometry and does not validate this correction.
+
+The figures below are recorded simulation evidence from the previous geometry
+and D435i profile. They predate the November 9, 2026 model/camera update and do
+not validate its navigation behavior or physical hardware.
 
 | Demonstration | Result | Evidence |
 | --- | --- | --- |
@@ -195,14 +225,14 @@ as the record rather than treating it as the normal navigation launcher.
 
 ## Next steps
 
-The next two modeling tasks begin **after the actual robot has been measured
-and observed**. Preserve unknown values as provisional until then.
+The supplied base/rail dimensions are incorporated. Remaining geometry and
+dynamics work needs further physical measurements and observations; unknown
+values remain provisional.
 
-1. **Update the robot URDF to match physical hardware**
-   Measure chassis dimensions, wheel/caster geometry, sensor mounts and
-   collision clearances. Update the URDF and reconcile the separate Gazebo SDF,
-   including justified mass/inertia values. Deliver the updated URDF and an
-   RViz visualization.
+1. **Complete measured robot geometry**
+   Measure chassis height, wheel/caster geometry, upright and camera mounts,
+   collision clearances and mass/COM. Refine both the URDF and Gazebo SDF using
+   justified dimensions and inertias, then inspect them in RViz.
 2. **Validate the updated model and physics in Gazebo**
    Compare forward/lateral movement, turning and obstacle clearance with
    observed hardware behavior. Adjust Nav2 footprint and motion limits as
@@ -211,12 +241,13 @@ and observed**. Preserve unknown values as provisional until then.
    establish `/map` and TF ownership, provide a SLAM launch mode, and validate
    map alignment and navigation/replanning. This can progress alongside
    hardware measurements; no SLAM implementation is marked complete here.
-4. **Complete physical bringup and calibration.** Connect real D435i
+4. **Complete physical bringup and calibration.** Connect real Gemini 335L
    PointCloud2/IMU data, measured sensor/elevator transforms, wheel odometry
    and the FLOW CAN bridge. Validate the real robot before treating simulation
    tuning as hardware calibration. The target sensing contract remains
-   D435i -> RealSense ROS driver -> PointCloud2 -> camera_to_scan -> `/scan` -> Nav2.
-5. **Include the rail and YAM arms later.** Add measured geometry, joints,
+   Gemini 335L -> Orbbec ROS driver -> PointCloud2 -> camera_to_scan -> `/scan` -> Nav2.
+5. **Add rail motion and YAM arms later.** Extend the fixed rail/upright with
+   measured geometry, joints,
    collisions and configuration-dependent sensor transforms. Account for the
    arm/rail envelope and mass distribution, then implement navigation and
    manipulation handoff. Navigation controls base vx/vy/yaw; manipulation/VLA

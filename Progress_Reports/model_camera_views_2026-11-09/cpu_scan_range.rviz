@@ -1,0 +1,70 @@
+Panels:
+- Class: rviz_common/Displays
+  Name: Displays
+- Class: rviz_common/Views
+  Name: Views
+Visualization Manager:
+  Class: ''
+  Enabled: true
+  Name: root
+  Global Options:
+    Background Color: 235; 239; 244
+    Fixed Frame: base_link
+    Frame Rate: 30
+  Displays:
+  - Class: rviz_default_plugins/Grid
+    Name: Grid
+    Enabled: true
+    Cell Size: 0.5
+    Plane: XY
+    Plane Cell Count: 40
+    Reference Frame: <Fixed Frame>
+    Color: 180; 190; 202
+    Alpha: 0.35
+  - Class: rviz_default_plugins/RobotModel
+    Name: Robot
+    Enabled: true
+    Description Source: Topic
+    Description Topic:
+      Value: /robot_description
+      Depth: 1
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+    Visual Enabled: true
+    Collision Enabled: false
+    Alpha: 1
+  - Class: rviz_default_plugins/MarkerArray
+    Name: CPU Scan Range (red)
+    Enabled: true
+    Namespaces: {}
+    Topic:
+      Value: /screenshot/scan_range
+      Depth: 1
+      Reliability Policy: Reliable
+      Durability Policy: Transient Local
+  Tools:
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/FocusCamera
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Near Clip Distance: 0.01
+      Target Frame: base_link
+      Scale: 112
+      Angle: -1.57079632679
+      X: 3.0
+      Y: 0.0
+      Value: TopDownOrtho (rviz_default_plugins)
+    Saved: null
+Window Geometry:
+  Width: 1550
+  Height: 1000
+  X: 40
+  Y: 40
+  Hide Left Dock: false
+  Hide Right Dock: false

@@ -2,7 +2,7 @@
 <package format="3">
   <name>robot_state_estimation</name>
   <version>0.0.0</version>
-  <description>Planar wheel and D435i gyro fusion for the holonomic FLOW base.</description>
+  <description>Planar wheel and camera gyro fusion for the holonomic FLOW base.</description>
   <maintainer email="zachgaier5@gmail.com">Zach Gaier</maintainer>
   <license>Apache-2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>

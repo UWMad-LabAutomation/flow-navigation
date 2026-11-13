@@ -20,8 +20,8 @@ public:
     get(half_angle_, "forward_half_angle", 0.261799f);
     get(lookahead_, "obstacle_lookahead", 1.5f);
     get(alignment_, "alignment_tolerance", 0.5f);
-    get(half_length_, "robot_half_length", 0.3955f);
-    get(half_width_, "robot_half_width", 0.321f);
+    get(half_length_, "robot_half_length", 0.32f);
+    get(half_width_, "robot_half_width", 0.425f);
     if (!std::isfinite(weight_) || !std::isfinite(avoidance_weight_) ||
       weight_ <= 0 || avoidance_weight_ < 0 || avoidance_weight_ > weight_ ||
       !std::isfinite(half_angle_) || half_angle_ <= 0 || half_angle_ >= 1.570796f ||

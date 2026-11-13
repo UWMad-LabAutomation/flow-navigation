@@ -1,0 +1,2 @@
+[INFO] [1794257990.866349630] [imu_bridge]: Creating GZ->ROS Bridge: [/model/flow_base/camera/imu (gz.msgs.IMU) -> /model/flow_base/camera/imu (sensor_msgs/msg/Imu)] (Lazy 0)
+[INFO] [1794258010.074869039] [rclcpp]: signal_handler(SIGINT/SIGTERM)

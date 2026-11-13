@@ -46,8 +46,9 @@ def point(cloud, row, col):
 def check_floor(output, simulation, description):
     """Reject false raised-floor hits with the default tilted, dynamic robot."""
     robot = xacro.process_file(str(description / 'urdf/flow_base.urdf.xacro')).toxml()
-    pitch = float(ET.fromstring(robot).find(
-        "joint[@name='base_link_to_camera_link']/origin").get('rpy').split()[1])
+    mount = ET.fromstring(robot).find("joint[@name='base_link_to_camera_link']/origin")
+    pitch = float(mount.get('rpy').split()[1])
+    camera_height = float(mount.get('xyz').split()[2])
     world = configure_sensor_world(simulation / 'worlds/flow_base.sdf', robot, 'camera')
     received = []
     ready = threading.Event()
@@ -71,7 +72,7 @@ def check_floor(output, simulation, description):
                     for col in range(cloud.width):
                         x, _, z = point(cloud, row, col)
                         if math.isfinite(x):
-                            ground_z = 2.0 - math.sin(pitch) * x + math.cos(pitch) * z
+                            ground_z = camera_height - math.sin(pitch) * x + math.cos(pitch) * z
                             max_height_error = max(max_height_error, abs(ground_z))
                             hits += 1
             assert hits > 100
@@ -97,7 +98,8 @@ def main():
     world = configure_sensor_world(
         simulation / 'worlds/flow_base.sdf',
         xacro.process_file(str(description / 'urdf/flow_base.urdf.xacro'),
-                           mappings={'camera_pitch': '0'}).toxml(), 'camera')
+                           mappings={'camera_x': '0', 'camera_z': '2',
+                                     'camera_pitch': '0'}).toxml(), 'camera')
     tree = ET.parse(world)
     # Hold the robot still so ray geometry has an exact analytic reference.
     model = tree.find("world/model[@name='flow_base']")
@@ -149,14 +151,14 @@ def main():
             assert not cloud.is_dense
             assert any(d.key == 'frame_id' and list(d.value) == ['camera_depth_frame']
                        for d in cloud.header.data)
-            fx = 80 / (2 * math.tan(math.radians(87) / 2))
-            fy = 45 / (2 * math.tan(math.radians(58) / 2))
+            fx = 80 / (2 * math.tan(math.radians(90) / 2))
+            fy = 45 / (2 * math.tan(math.radians(65) / 2))
             for row, col in [(22, 40), (22, 0), (22, 79), (0, 40), (44, 40)]:
                 expected = [2, 2 * (40 - col - .5) / fx, 2 * (22.5 - row - .5) / fy]
                 actual = point(cloud, row, col)
                 assert all(abs(a - b) < .005 for a, b in zip(actual, expected)), (
                     row, col, actual, expected)
-            print('PASS: collision-only wall, 87x58 FOV, independent intrinsics and XYZ frame',
+            print('PASS: collision-only wall, 90x65 FOV, independent intrinsics and XYZ frame',
                   flush=True)
 
             # Insert after startup; the closest object must hide the far wall.
@@ -176,12 +178,12 @@ def main():
             wait_for(lambda c: all(math.isnan(v) for v in point(c, 22, 40)))
             print('PASS: near clipping preserves occlusion and reports unknown', flush=True)
             move('occluder', 1.1, 2, 2)
-            move('reference_wall', 3.3, 0, 2)
+            move('reference_wall', 6.3, 0, 2)
             wait_for(lambda c: all(math.isnan(v) for v in point(c, 22, 40)))
             # Ensure this is not the old near-occluder frame.
             move('reference_wall', 2.1, 0, 2)
             wait_for(lambda c: abs(point(c, 22, 40)[0] - 2) < .005)
-            move('reference_wall', 3.3, 0, 2)
+            move('reference_wall', 6.3, 0, 2)
             wait_for(lambda c: all(math.isnan(v) for v in point(c, 22, 40)))
             print('PASS: far clipping reports unknown', flush=True)
 

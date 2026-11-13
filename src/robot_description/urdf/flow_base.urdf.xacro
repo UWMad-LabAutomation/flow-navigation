@@ -1,31 +1,49 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="linearbot">
   <!--
-    The footprint dimensions come from the documented full LinearBot envelope.
-    Base height is provisional because a base-only height is not yet available.
+    Base plan dimensions and rail dimensions supplied on 2026-11-09.
+    Base height, ground clearance, mass and COM remain simulation assumptions.
   -->
-  <xacro:property name="base_length" value="0.751" />
-  <xacro:property name="base_width" value="0.542" />
+  <xacro:property name="base_length" value="0.540" />
+  <xacro:property name="base_width" value="0.540" />
   <xacro:property name="base_height" value="0.200" />
+  <xacro:property name="base_clearance" value="0.080" />
   <xacro:property name="base_mass" value="80.0" />
+  <!-- Rail spans Y; its front face is 2 cm behind the base's +X face. -->
+  <xacro:property name="rail_length" value="0.100" />
+  <xacro:property name="rail_width" value="0.750" />
+  <xacro:property name="rail_height" value="0.050" />
+  <xacro:property name="rail_front_setback" value="0.020" />
+  <xacro:property name="rail_front_x" value="${base_length / 2.0 - rail_front_setback}" />
+  <xacro:property name="rail_x" value="${rail_front_x - rail_length / 2.0}" />
+  <xacro:property name="rail_z" value="1.250" />
+  <!-- User-selected upright thickness; align front faces to support the full
+       rail depth while keeping the upright inside the base's plan outline. -->
+  <xacro:property name="support_length" value="0.200" />
+  <xacro:property name="support_width" value="0.150" />
+  <xacro:property name="support_x" value="${rail_front_x - support_length / 2.0}" />
+  <xacro:property name="base_top" value="${base_clearance + base_height}" />
+  <xacro:property name="support_height" value="${rail_z - rail_height / 2.0 - base_top}" />
+  <xacro:property name="support_z" value="${base_top + support_height / 2.0}" />
 
   <!--
-    D435i depth-reference pose relative to base_link, in metres and radians.
-    X is centered; 2 m is the maximum reference height with the elevator raised.
-    Set camera_z for the elevator position being simulated.
-    Zero yaw faces +X, through the 0.542 m-wide end of the base. Automatic
-    pitch puts the bottom of the depth view on the ground 1 m beyond it.
+    Gemini 335L nominal depth-reference pose relative to base_link.
+    The default camera sits just ahead of the rail's +X face, centered in Y,
+    to avoid self-occlusion. The rail's long direction is Y.
+    Its precise mount/optical-center offset is provisional, in metres/radians.
+    Zero yaw faces +X. Auto pitch targets ground 1 m beyond the base front.
+    Rail and camera are fixed; camera pose overrides do not animate the rail.
   -->
-  <xacro:arg name="camera_x" default="0.0" />
+  <xacro:arg name="camera_x" default="0.275" />
   <xacro:arg name="camera_y" default="0.0" />
-  <xacro:arg name="camera_z" default="2.0" />
+  <xacro:arg name="camera_z" default="1.25" />
   <xacro:arg name="camera_roll" default="0.0" />
   <xacro:arg name="camera_pitch" default="auto" />
   <xacro:arg name="camera_yaw" default="0.0" />
-  <xacro:arg name="camera_hfov" default="87.0" />
-  <xacro:arg name="camera_vfov" default="58.0" />
+  <xacro:arg name="camera_hfov" default="90.0" />
+  <xacro:arg name="camera_vfov" default="65.0" />
   <xacro:arg name="camera_image_width" default="1280" />
-  <xacro:arg name="camera_image_height" default="720" />
+  <xacro:arg name="camera_image_height" default="800" />
   <xacro:arg name="camera_ground_distance" default="1.0" />
   <xacro:arg name="camera_nominal_depth_frames" default="true" />
   <xacro:property name="camera_pitch_request" value="$(arg camera_pitch)" />
@@ -36,16 +54,16 @@
   <xacro:property name="camera_mount_pitch"
                   value="${max(0.0, atan2(float('$(arg camera_z)'), camera_ground_run) - camera_half_vfov) if camera_pitch_request == 'auto' else float(camera_pitch_request)}" />
 
-  <!-- Simplified D435i enclosure and nominal left-depth-imager reference. -->
-  <xacro:property name="camera_width" value="0.090" />
-  <xacro:property name="camera_height" value="0.025" />
-  <xacro:property name="camera_depth" value="0.025" />
-  <xacro:property name="camera_depth_reference_y" value="0.0175" />
+  <!-- Gemini 335L 124 x 29 x 27 mm housing. The box is centered nominally;
+       measured depth optical-center extrinsics must come from the Orbbec driver. -->
+  <xacro:property name="camera_width" value="0.124" />
+  <xacro:property name="camera_height" value="0.029" />
+  <xacro:property name="camera_depth" value="0.027" />
 
   <!-- COM is currently undetermined; use the geometric center provisionally. -->
   <xacro:property name="com_x" value="0.0" />
   <xacro:property name="com_y" value="0.0" />
-  <xacro:property name="com_z" value="${base_height / 2.0}" />
+  <xacro:property name="com_z" value="${base_clearance + base_height / 2.0}" />
 
   <xacro:property name="ixx" value="${base_mass / 12.0 * (base_width * base_width + base_height * base_height)}" />
   <xacro:property name="iyy" value="${base_mass / 12.0 * (base_length * base_length + base_height * base_height)}" />
@@ -61,7 +79,7 @@
 
   <link name="base_link">
     <visual>
-      <origin xyz="0 0 ${base_height / 2.0}" rpy="0 0 0" />
+      <origin xyz="0 0 ${base_clearance + base_height / 2.0}" rpy="0 0 0" />
       <geometry>
         <box size="${base_length} ${base_width} ${base_height}" />
       </geometry>
@@ -71,7 +89,7 @@
     </visual>
 
     <collision>
-      <origin xyz="0 0 ${base_height / 2.0}" rpy="0 0 0" />
+      <origin xyz="0 0 ${base_clearance + base_height / 2.0}" rpy="0 0 0" />
       <geometry>
         <box size="${base_length} ${base_width} ${base_height}" />
       </geometry>
@@ -87,11 +105,35 @@
     </inertial>
   </link>
 
-  <!--
-    Single forward-facing D435i. camera_link uses X forward, Y left, Z up.
-    This is a static description, not a Gazebo depth-sensor implementation.
-    D435i depth FOV is 87 degrees horizontal by 58 degrees vertical.
-  -->
+  <!-- Fixed structure only: no articulated elevator or YAM arms. Upper-body
+       mass distribution is unknown; retain the provisional aggregate inertia. -->
+  <xacro:macro name="structure_box" params="name length width height x z">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry><box size="${length} ${width} ${height}" /></geometry>
+        <material name="rail_gray"><color rgba="0.35 0.38 0.42 1.0" /></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry><box size="${length} ${width} ${height}" /></geometry>
+      </collision>
+    </link>
+    <joint name="base_link_to_${name}" type="fixed">
+      <parent link="base_link" />
+      <child link="${name}" />
+      <origin xyz="${x} 0 ${z}" rpy="0 0 0" />
+    </joint>
+  </xacro:macro>
+  <xacro:structure_box name="rail_support_link" length="${support_length}"
+                       width="${support_width}" height="${support_height}"
+                       x="${support_x}" z="${support_z}" />
+  <xacro:structure_box name="arm_rail_link" length="${rail_length}"
+                       width="${rail_width}" height="${rail_height}"
+                       x="${rail_x}" z="${rail_z}" />
+
+  <!-- Single rail-mounted Gemini 335L, 90 x 65 degree nominal depth FOV.
+       camera_link uses X forward, Y left, Z up; mount stays base-relative. -->
   <joint name="base_link_to_camera_link" type="fixed">
     <parent link="base_link" />
     <child link="camera_link" />
@@ -101,7 +143,7 @@
 
   <link name="camera_link">
     <visual>
-      <origin xyz="0 ${-camera_depth_reference_y} 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <box size="${camera_depth} ${camera_width} ${camera_height}" />
       </geometry>
@@ -110,14 +152,14 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0 ${-camera_depth_reference_y} 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
         <box size="${camera_depth} ${camera_width} ${camera_height}" />
       </geometry>
     </collision>
   </link>
 
-  <!-- Disable these nominal frames when the RealSense driver publishes them. -->
+  <!-- Disable these nominal frames when the Orbbec driver publishes them. -->
   <xacro:if value="$(arg camera_nominal_depth_frames)">
     <!-- Simulation IMU axes follow camera_link. Hardware uses driver extrinsics. -->
     <link name="camera_imu_frame" />
@@ -155,7 +197,7 @@
   <!--
     Legacy simulation compatibility: the existing SDF lidar and bridge still
     reference laser_link. Retain this frame until that simulation is migrated;
-    the intended hardware sensor is the single D435i above.
+    the intended hardware sensor is the single Gemini 335L above.
   -->
   <link name="laser_link" />
 

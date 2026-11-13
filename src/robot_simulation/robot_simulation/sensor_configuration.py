@@ -18,20 +18,20 @@ SENSOR_ARGUMENTS = {
     'camera_backend': ('cpu', 'Camera simulation: cpu ray casting or rendered depth.'),
     'camera_ray_width': ('80', 'CPU camera horizontal ray samples (not image resolution).'),
     'camera_ray_height': ('45', 'CPU camera vertical ray samples (not image resolution).'),
-    'camera_x': ('0.0', 'Camera reference X offset in metres.'),
+    'camera_x': ('0.275', 'Nominal depth reference X; just ahead of the rail front face.'),
     'camera_y': ('0.0', 'Camera reference Y offset in metres.'),
-    'camera_z': ('2.0', 'Camera reference height in metres; fully raised elevator.'),
+    'camera_z': ('1.25', 'Camera reference height in metres; fixed rail mount.'),
     'camera_roll': ('0.0', 'Camera mount roll in radians.'),
     'camera_pitch': ('auto', 'Downward pitch in radians, or auto for ground coverage.'),
     'camera_yaw': ('0.0', 'Camera mount yaw in radians; zero faces +X.'),
-    'camera_hfov': ('87.0', 'Depth camera horizontal field of view in degrees.'),
-    'camera_vfov': ('58.0', 'Depth camera vertical field of view in degrees.'),
+    'camera_hfov': ('90.0', 'Gemini 335L nominal depth horizontal field of view in degrees.'),
+    'camera_vfov': ('65.0', 'Gemini 335L nominal depth vertical field of view in degrees.'),
     'camera_image_width': ('1280', 'Depth image width in pixels.'),
-    'camera_image_height': ('720', 'Depth image height in pixels.'),
+    'camera_image_height': ('800', 'Depth image height in pixels.'),
     'camera_fps': ('30.0', 'Requested depth camera frames per simulated second.'),
     'camera_ground_distance': ('1.0', 'Ground distance beyond the front edge for auto pitch.'),
-    'camera_near': ('0.3', 'Simulated depth near clipping distance in metres.'),
-    'camera_far': ('3.0', 'Simulated depth far clipping distance in metres.'),
+    'camera_near': ('0.25', 'Simulated near clip; Gemini 335L ideal-range minimum in metres.'),
+    'camera_far': ('6.0', 'Simulated far clip; Gemini 335L ideal-range maximum in metres.'),
     'gui': ('true', 'Open Gazebo GUI; false uses headless rendering.'),
 }
 CAMERA_POSE_ARGUMENTS = (
@@ -102,9 +102,9 @@ def _finite_cpu_floor(world):
 
 
 def configure_sensor_world(world_path, robot_description, sensor,
-                           horizontal_fov=87.0, near=0.3, far=3.0,
-                           image_width=1280, image_height=720,
-                           vertical_fov=58.0, fps=30.0,
+                           horizontal_fov=90.0, near=0.25, far=6.0,
+                           image_width=1280, image_height=800,
+                           vertical_fov=65.0, fps=30.0,
                            camera_backend='cpu', ray_width=80, ray_height=45,
                            imu_enabled=False):
     """Create a run-specific world with one sensing source and matching camera TF."""
@@ -142,7 +142,7 @@ def configure_sensor_world(world_path, robot_description, sensor,
     mount = robot.find("joint[@name='base_link_to_camera_link']/origin")
     body = robot.find("link[@name='camera_link']/visual")
     if mount is None or body is None:
-        raise ValueError('robot description must contain the D435i camera mount')
+        raise ValueError('robot description must contain the Gemini 335L camera mount')
     pose_values = (mount.get('xyz') + ' ' + mount.get('rpy')).split()
     if len(pose_values) != 6 or not all(
             math.isfinite(float(value)) for value in pose_values):
@@ -158,11 +158,35 @@ def configure_sensor_world(world_path, robot_description, sensor,
         model, 'frame', name='navigation_base', attached_to='base_link')
     ET.SubElement(navigation_frame, 'pose', relative_to='__model__').text = (
         f'0 0 {-wheel_radius} 0 0 0')
+    # Reuse URDF upper-body geometry so RViz and both sensing backends agree.
+    # These fixed boxes belong to the existing chassis; no unmeasured masses
+    # or separate dynamic links are introduced.
+    for link_name in ('rail_support_link', 'arm_rail_link'):
+        link = robot.find(f"link[@name='{link_name}']")
+        joint = robot.find(f"joint[@name='base_link_to_{link_name}']/origin")
+        if link is None or joint is None:
+            raise ValueError(f'robot description must contain fixed {link_name}')
+        frame = ET.SubElement(model, 'frame', name=link_name, attached_to='base_link')
+        ET.SubElement(frame, 'pose', relative_to='navigation_base').text = (
+            joint.get('xyz') + ' ' + joint.get('rpy'))
+        for kind in ('visual', 'collision'):
+            source = link.find(kind)
+            target = ET.SubElement(chassis, kind, name=link_name)
+            origin = source.find('origin')
+            ET.SubElement(target, 'pose', relative_to=link_name).text = (
+                origin.get('xyz') + ' ' + origin.get('rpy'))
+            geometry = ET.SubElement(target, 'geometry')
+            ET.SubElement(ET.SubElement(geometry, 'box'), 'size').text = (
+                source.find('geometry/box').get('size'))
+            if kind == 'visual':
+                material = ET.SubElement(target, 'material')
+                for tag in ('ambient', 'diffuse'):
+                    ET.SubElement(material, tag).text = '0.35 0.38 0.42 1'
     camera_frame = ET.SubElement(
         model, 'frame', name='camera_link', attached_to='base_link')
     ET.SubElement(camera_frame, 'pose', relative_to='navigation_base').text = (
         mount.get('xyz') + ' ' + mount.get('rpy'))
-    visual = ET.SubElement(chassis, 'visual', name='d435i_body')
+    visual = ET.SubElement(chassis, 'visual', name='gemini_335l_body')
     origin = body.find('origin')
     ET.SubElement(visual, 'pose', relative_to='camera_link').text = (
         origin.get('xyz') + ' ' + origin.get('rpy'))
@@ -201,7 +225,7 @@ def configure_sensor_world(world_path, robot_description, sensor,
 
     if sensor == 'camera' and camera_backend == 'render':
         camera_sensor = ET.SubElement(
-            chassis, 'sensor', name='d435i_depth', type='depth_camera')
+            chassis, 'sensor', name='gemini_335l_depth', type='depth_camera')
         ET.SubElement(camera_sensor, 'pose', relative_to='camera_link').text = (
             '0 0 0 0 0 0')
         ET.SubElement(camera_sensor, 'topic').text = DEPTH_TOPIC
@@ -217,8 +241,8 @@ def configure_sensor_world(world_path, robot_description, sensor,
         ET.SubElement(image, 'width').text = str(image_width)
         ET.SubElement(image, 'height').text = str(image_height)
         ET.SubElement(image, 'format').text = 'R_FLOAT32'
-        # Independent focal lengths preserve both specified FOVs at 1280x720.
-        # Square-pixel projection from HFOV alone would yield only 56.2 deg VFOV.
+        # Independent focal lengths approximate both nominal Gemini 335L FOVs
+        # at 1280x800; hardware uses its calibrated stereo depth intrinsics.
         lens = ET.SubElement(camera, 'lens')
         intrinsics = ET.SubElement(lens, 'intrinsics')
         for tag, value in {
@@ -236,7 +260,7 @@ def configure_sensor_world(world_path, robot_description, sensor,
         world = tree.find('world')
         ET.SubElement(world, 'plugin', filename='gz-sim-imu-system',
                       name='gz::sim::systems::Imu')
-        imu = ET.SubElement(chassis, 'sensor', name='d435i_imu', type='imu')
+        imu = ET.SubElement(chassis, 'sensor', name='gemini_335l_imu', type='imu')
         ET.SubElement(imu, 'pose', relative_to='camera_link').text = '0 0 0 0 0 0'
         ET.SubElement(imu, 'topic').text = IMU_TOPIC
         ET.SubElement(imu, 'update_rate').text = '100'
